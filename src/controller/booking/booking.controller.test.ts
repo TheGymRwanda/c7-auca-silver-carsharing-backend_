@@ -1,4 +1,9 @@
-import { BadRequestException, UnauthorizedException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common'
 
 import {
   type BookingID,
@@ -132,7 +137,7 @@ describe('BookingController', () => {
 
       await expect(
         bookingController.getOne(user, 1 as BookingID),
-      ).rejects.toThrow(UnauthorizedException)
+      ).rejects.toThrow(ForbiddenException)
       expect(bookingServiceMock.get).toHaveBeenCalledWith(
         1 as BookingID,
         user.id,
@@ -240,7 +245,7 @@ describe('BookingController', () => {
 
       await expect(
         bookingController.create(user, createBookingDTO),
-      ).rejects.toThrow(BadRequestException)
+      ).rejects.toThrow(ConflictException)
       await expect(
         bookingController.create(user, createBookingDTO),
       ).rejects.toThrow('The car is not available in the requested time slot')
@@ -351,7 +356,7 @@ describe('BookingController', () => {
         bookingController.patch(user, bookingId, {
           state: BookingState.CONFIRMED,
         }),
-      ).rejects.toThrow(UnauthorizedException)
+      ).rejects.toThrow(ForbiddenException)
     })
 
     it('should throw BadRequestException when car is not available', async () => {
@@ -363,7 +368,7 @@ describe('BookingController', () => {
         bookingController.patch(user, bookingId, {
           startDate: '2026-03-01T10:00:00Z',
         }),
-      ).rejects.toThrow(BadRequestException)
+      ).rejects.toThrow(ConflictException)
     })
 
     it('should throw BadRequestException when state transition is invalid', async () => {
