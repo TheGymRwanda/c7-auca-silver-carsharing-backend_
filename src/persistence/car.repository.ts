@@ -26,8 +26,6 @@ type Row = {
   info: string | null
 }
 
-// Please remove the next line when implementing this file.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function rowToDomain(row: Row): Car {
   return new Car({
     id: row.id as CarID,
@@ -41,9 +39,6 @@ function rowToDomain(row: Row): Car {
     info: row.info,
   })
 }
-
-// Please remove the next line when implementing this file.
-/* eslint-disable @typescript-eslint/require-await */
 
 @Injectable()
 export class CarRepository implements ICarRepository {
@@ -71,9 +66,33 @@ export class CarRepository implements ICarRepository {
   }
 
   public async insert(
-    _tx: Transaction,
-    _car: Except<CarProperties, 'id'>,
+    tx: Transaction,
+    properties: Except<CarProperties, 'id'>,
   ): Promise<Car> {
-    throw new Error('Not implemented')
+    const row = await tx.one<Row>(
+      `
+      INSERT INTO cars (
+        car_type_id,
+        owner_id,
+        name,
+        state,
+        fuel_type,
+        horsepower,
+        license_plate,
+        info
+      ) VALUES (
+        $(carTypeId),
+        $(ownerId),
+        $(name),
+        $(state),
+        $(fuelType),
+        $(horsepower),
+        $(licensePlate),
+        $(info)
+      ) RETURNING *`,
+      { ...properties },
+    )
+
+    return rowToDomain(row)
   }
 }
