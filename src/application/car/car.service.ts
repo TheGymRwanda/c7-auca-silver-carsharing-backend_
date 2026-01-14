@@ -1,10 +1,15 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common'
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+} from '@nestjs/common'
 import { type Except } from 'type-fest'
 
 import { IDatabaseConnection } from '../../persistence/database-connection.interface'
 import { type UserID } from '../user'
 
-import { type Car, type CarID, type CarProperties } from './car'
+import { Car, type CarID, type CarProperties } from './car'
 import { ICarRepository } from './car.repository.interface'
 import { type ICarService } from './car.service.interface'
 
@@ -53,10 +58,24 @@ export class CarService implements ICarService {
   }
 
   public async update(
-    _carId: CarID,
-    _updates: Partial<Except<CarProperties, 'id'>>,
-    _currentUserId: UserID,
+    carId: CarID,
+    updates: Partial<Except<CarProperties, 'id'>>,
+    currentUserId: UserID,
   ): Promise<Car> {
-    throw new Error('Not implemented')
+    return this.databaseConnection.transactional(async tx => {
+      const car = await this.carRepository.get(tx, carId)
+
+      if (car.ownerId !== currentUserId) {
+        throw new ForbiddenException('You can only update cars that you own')
+      }
+
+      const updatedCar = new Car({
+        ...car,
+        ...updates,
+        id: carId,
+      })
+
+      return this.carRepository.update(tx, updatedCar)
+    })
   }
 }
