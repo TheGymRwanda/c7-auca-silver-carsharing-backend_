@@ -6,6 +6,7 @@ import {
   type CarProperties,
   type CarState,
   type CarTypeID,
+  CarNotFoundError,
   type FuelType,
   type ICarRepository,
   type UserID,
@@ -47,16 +48,28 @@ function rowToDomain(row: Row): Car {
 
 @Injectable()
 export class CarRepository implements ICarRepository {
-  public async find(_tx: Transaction, _id: CarID): Promise<Car | null> {
-    throw new Error('Not implemented')
+  public async find(tx: Transaction, id: CarID): Promise<Car | null> {
+    const row = await tx.oneOrNone<Row>('SELECT * FROM cars WHERE id = $(id)', {
+      id,
+    })
+
+    return row ? rowToDomain(row) : null
   }
 
-  public async get(_tx: Transaction, _id: CarID): Promise<Car> {
-    throw new Error('Not implemented')
+  public async get(tx: Transaction, id: CarID): Promise<Car> {
+    const car = await this.find(tx, id)
+
+    if (!car) {
+      throw new CarNotFoundError(id)
+    }
+
+    return car
   }
 
-  public async getAll(_tx: Transaction): Promise<Car[]> {
-    throw new Error('Not implemented')
+  public async getAll(tx: Transaction): Promise<Car[]> {
+    const rows = await tx.any<Row>('SELECT * FROM cars')
+
+    return rows.map(row => rowToDomain(row))
   }
 
   public async findByLicensePlate(

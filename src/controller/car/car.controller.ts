@@ -52,9 +52,15 @@ export class CarController {
   @ApiOperation({
     summary: 'Retrieve all cars.',
   })
+  @ApiOkResponse({
+    description: 'The request was successful.',
+    type: [CarDTO],
+  })
   @Get()
   public async getAll(): Promise<CarDTO[]> {
-    throw new NotImplementedException()
+    const cars = await this.carService.getAll()
+
+    return cars.map(car => CarDTO.fromModel(car))
   }
 
   @ApiOperation({
@@ -72,8 +78,10 @@ export class CarController {
     description: 'No car with the given id was found.',
   })
   @Get(':id')
-  public async get(@Param('id', ParseIntPipe) _id: CarID): Promise<CarDTO> {
-    throw new NotImplementedException()
+  public async get(@Param('id', ParseIntPipe) id: CarID): Promise<CarDTO> {
+    const car = await this.carService.get(id)
+
+    return CarDTO.fromModel(car)
   }
 
   @ApiOperation({
