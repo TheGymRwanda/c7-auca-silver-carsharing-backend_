@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   NotImplementedException,
   Param,
@@ -14,6 +15,7 @@ import {
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -115,6 +117,7 @@ export class CarController {
   })
   @ApiOkResponse({
     description: 'The car was updated.',
+    type: CarDTO,
   })
   @ApiBadRequestResponse({
     description:
@@ -123,12 +126,16 @@ export class CarController {
   @ApiNotFoundResponse({
     description: 'No car with the given id was found.',
   })
+  @ApiForbiddenResponse({
+    description: 'You can only update cars that you own.',
+  })
   @Patch(':id')
   public async patch(
-    @CurrentUser() _user: User,
-    @Param('id', ParseIntPipe) _carId: CarID,
-    @Body() _data: PatchCarDTO,
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) carId: CarID,
+    @Body() data: PatchCarDTO,
   ): Promise<CarDTO> {
-    throw new NotImplementedException()
+    const car = await this.carService.update(carId, data, user.id)
+    return CarDTO.fromModel(car)
   }
 }
