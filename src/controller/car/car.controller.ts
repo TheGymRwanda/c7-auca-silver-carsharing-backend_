@@ -22,7 +22,13 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger'
 
-import { Car, type CarID, ICarService, type User } from '../../application'
+import {
+  Car,
+  CarState,
+  type CarID,
+  ICarService,
+  type User,
+} from '../../application'
 import { AuthenticationGuard } from '../authentication.guard'
 import { CurrentUser } from '../current-user.decorator'
 
@@ -81,6 +87,7 @@ export class CarController {
   })
   @ApiCreatedResponse({
     description: 'A new car was created.',
+    type: CarDTO,
   })
   @ApiBadRequestResponse({
     description:
@@ -91,10 +98,16 @@ export class CarController {
   })
   @Post()
   public async create(
-    @CurrentUser() _owner: User,
-    @Body() _data: CreateCarDTO,
+    @CurrentUser() owner: User,
+    @Body() data: CreateCarDTO,
   ): Promise<CarDTO> {
-    throw new NotImplementedException()
+    const car = await this.carService.create({
+      ...data,
+      ownerId: owner.id,
+      state: CarState.LOCKED,
+    })
+
+    return CarDTO.fromModel(car)
   }
 
   @ApiOperation({
