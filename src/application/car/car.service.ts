@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { ConflictException, Injectable, Logger } from '@nestjs/common'
 import { type Except } from 'type-fest'
 
 import { IDatabaseConnection } from '../../persistence/database-connection.interface'
@@ -27,9 +27,21 @@ export class CarService implements ICarService {
   /* eslint-disable @typescript-eslint/require-await */
 
   public async create(data: Except<CarProperties, 'id'>): Promise<Car> {
-    return this.databaseConnection.transactional(tx =>
-      this.carRepository.insert(tx, data),
-    )
+    try {
+      return await this.databaseConnection.transactional(tx =>
+        this.carRepository.insert(tx, data),
+      )
+    } catch (error: unknown) {
+      if (
+        error instanceof Error &&
+        error.message.includes('cars_license_plate_key')
+      ) {
+        throw new ConflictException(
+          'A car with the given license plate already exists',
+        )
+      }
+      throw error
+    }
   }
 
   public async getAll(): Promise<Car[]> {
