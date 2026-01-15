@@ -74,6 +74,19 @@ export class CarService implements ICarService {
         throw new ForbiddenException('You can only update cars that you own')
       }
 
+      if (updates.licensePlate && updates.licensePlate !== car.licensePlate) {
+        const existingCar = await this.carRepository.findByLicensePlate(
+          tx,
+          updates.licensePlate,
+        )
+
+        if (existingCar) {
+          throw new BadRequestException(
+            'Another car already has this license plate',
+          )
+        }
+      }
+
       const updatedCar = new Car({
         ...car,
         ...updates,
