@@ -11,7 +11,6 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
-  ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
@@ -99,10 +98,7 @@ export class CarController {
   })
   @ApiBadRequestResponse({
     description:
-      'The request was malformed, e.g. missing or invalid parameter or property in the request body.',
-  })
-  @ApiConflictResponse({
-    description: 'A car with the given license plate already exists.',
+      'The request was malformed, e.g. missing or invalid parameter or property in the request body, or a car with the given license plate already exists.',
   })
   @Post()
   public async create(
@@ -127,7 +123,7 @@ export class CarController {
   })
   @ApiBadRequestResponse({
     description:
-      'The request was malformed, e.g. missing or invalid parameter or property in the request body.',
+      'The request was malformed, e.g. missing or invalid parameter or property in the request body, or another car already has the provided license plate.',
   })
   @ApiNotFoundResponse({
     description: 'No car with the given id was found.',

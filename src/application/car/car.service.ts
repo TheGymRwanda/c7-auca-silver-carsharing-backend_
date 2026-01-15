@@ -1,5 +1,5 @@
 import {
-  ConflictException,
+  BadRequestException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -32,21 +32,22 @@ export class CarService implements ICarService {
   /* eslint-disable @typescript-eslint/require-await */
 
   public async create(data: Except<CarProperties, 'id'>): Promise<Car> {
-    try {
-      return await this.databaseConnection.transactional(tx =>
-        this.carRepository.insert(tx, data),
-      )
-    } catch (error: unknown) {
-      if (
-        error instanceof Error &&
-        error.message.includes('cars_license_plate_key')
-      ) {
-        throw new ConflictException(
-          'A car with the given license plate already exists',
+    return this.databaseConnection.transactional(async tx => {
+      if (data.licensePlate) {
+        const existingCar = await this.carRepository.findByLicensePlate(
+          tx,
+          data.licensePlate,
         )
+
+        if (existingCar) {
+          throw new BadRequestException(
+            'A car with this license plate already exists',
+          )
+        }
       }
-      throw error
-    }
+
+      return this.carRepository.insert(tx, data)
+    })
   }
 
   public async getAll(): Promise<Car[]> {
@@ -71,6 +72,19 @@ export class CarService implements ICarService {
 
       if (car.ownerId !== currentUserId) {
         throw new ForbiddenException('You can only update cars that you own')
+      }
+
+      if (updates.licensePlate && updates.licensePlate !== car.licensePlate) {
+        const existingCar = await this.carRepository.findByLicensePlate(
+          tx,
+          updates.licensePlate,
+        )
+
+        if (existingCar) {
+          throw new BadRequestException(
+            'Another car already has this license plate',
+          )
+        }
       }
 
       const updatedCar = new Car({
