@@ -68,10 +68,15 @@ export class CarRepository implements ICarRepository {
   }
 
   public async findByLicensePlate(
-    _tx: Transaction,
-    _licensePlate: string,
+    tx: Transaction,
+    licensePlate: string,
   ): Promise<Car | null> {
-    throw new Error('Not implemented')
+    const row = await tx.oneOrNone<Row>(
+      'SELECT * FROM cars WHERE license_plate = $(licensePlate)',
+      { licensePlate },
+    )
+
+    return row ? rowToDomain(row) : null
   }
 
   public async update(tx: Transaction, car: Car): Promise<Car> {
