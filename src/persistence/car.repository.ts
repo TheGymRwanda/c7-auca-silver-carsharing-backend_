@@ -67,6 +67,7 @@ export class CarRepository implements ICarRepository {
     return rows.map(row => rowToDomain(row))
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   public async findByLicensePlate(
     _tx: Transaction,
     _licensePlate: string,
