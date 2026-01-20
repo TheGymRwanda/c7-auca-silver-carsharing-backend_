@@ -7,6 +7,8 @@ import {
   Patch,
   Post,
   UseGuards,
+  BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common'
 import {
   ApiBadRequestResponse,
@@ -28,6 +30,7 @@ import {
   ICarService,
   type User,
 } from '../../application'
+import { CarAccessDeniedError, DuplicateLicensePlateError } from '../../application/car/error'
 import { AuthenticationGuard } from '../authentication.guard'
 import { CurrentUser } from '../current-user.decorator'
 
@@ -105,13 +108,22 @@ export class CarController {
     @CurrentUser() owner: User,
     @Body() data: CreateCarDTO,
   ): Promise<CarDTO> {
-    const car = await this.carService.create({
-      ...data,
-      ownerId: owner.id,
-      state: CarState.LOCKED,
-    })
+    try {
+      const car = await this.carService.create({
+        ...data,
+        ownerId: owner.id,
+        state: CarState.LOCKED,
+      })
 
-    return CarDTO.fromModel(car)
+      return CarDTO.fromModel(car)
+    } catch (error) {
+      if (error instanceof DuplicateLicensePlateError) {
+        throw new BadRequestException(
+          'A car with this license plate already exists'
+        )
+      }
+      throw error
+    }
   }
 
   @ApiOperation({
@@ -137,7 +149,19 @@ export class CarController {
     @Param('id', ParseIntPipe) carId: CarID,
     @Body() data: PatchCarDTO,
   ): Promise<CarDTO> {
-    const car = await this.carService.update(carId, data, user.id)
-    return CarDTO.fromModel(car)
+    try {
+      const car = await this.carService.update(carId, data, user.id)
+      return CarDTO.fromModel(car)
+    } catch (error) {
+      if (error instanceof CarAccessDeniedError) {
+        throw new ForbiddenException('You can only update cars that you own')
+      }
+      if (error instanceof DuplicateLicensePlateError) {
+        throw new BadRequestException(
+          'Another car already has this license plate'
+        )
+      }
+      throw error
+    }
   }
 }
