@@ -5,6 +5,7 @@ import {
 import { type Except } from 'type-fest'
 
 import { IDatabaseConnection } from '../../persistence/database-connection.interface'
+import { type Transaction } from '../../persistence/database-connection.interface'
 import { type UserID } from '../user'
 
 import { Car, type CarID, type CarProperties } from './car'
@@ -30,8 +31,26 @@ export class CarService implements ICarService {
   // Please remove the next line when implementing this file.
   /* eslint-disable @typescript-eslint/require-await */
 
+  private async validateLicensePlateUniqueness(
+    tx: Transaction,
+    licensePlate: string,
+    excludeCarId?: CarID,
+  ): Promise<void> {
+    const existingCar = await this.carRepository.findByLicensePlate(
+      tx,
+      licensePlate,
+    )
+
+    if (existingCar && existingCar.id !== excludeCarId) {
+      throw new DuplicateLicensePlateError(licensePlate)
+    }
+  }
+
   public async create(data: Except<CarProperties, 'id'>): Promise<Car> {
     return this.databaseConnection.transactional(async tx => {
+      if (data.licensePlate) {
+        await this.validateLicensePlateUniqueness(tx, data.licensePlate)
+      }
       return this.carRepository.insert(tx, data)
     })
   }
@@ -61,14 +80,7 @@ export class CarService implements ICarService {
       }
 
       if (updates.licensePlate && updates.licensePlate !== car.licensePlate) {
-        const existingCar = await this.carRepository.findByLicensePlate(
-          tx,
-          updates.licensePlate,
-        )
-
-        if (existingCar) {
-          throw new DuplicateLicensePlateError(updates.licensePlate)
-        }
+        await this.validateLicensePlateUniqueness(tx, updates.licensePlate, carId)
       }
 
       const updatedCar = new Car({
