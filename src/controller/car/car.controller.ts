@@ -57,6 +57,18 @@ export class CarController {
   // Please remove the next line when implementing this file.
   /* eslint-disable @typescript-eslint/require-await */
 
+  private handleCarErrors(error: unknown): never {
+    if (error instanceof CarAccessDeniedError) {
+      throw new ForbiddenException('You can only update cars that you own')
+    }
+    if (error instanceof DuplicateLicensePlateError) {
+      throw new BadRequestException(
+        'A car with this license plate already exists'
+      )
+    }
+    throw error
+  }
+
   @ApiOperation({
     summary: 'Retrieve all cars.',
   })
@@ -117,12 +129,7 @@ export class CarController {
 
       return CarDTO.fromModel(car)
     } catch (error) {
-      if (error instanceof DuplicateLicensePlateError) {
-        throw new BadRequestException(
-          'A car with this license plate already exists'
-        )
-      }
-      throw error
+      this.handleCarErrors(error)
     }
   }
 
@@ -153,15 +160,7 @@ export class CarController {
       const car = await this.carService.update(carId, data, user.id)
       return CarDTO.fromModel(car)
     } catch (error) {
-      if (error instanceof CarAccessDeniedError) {
-        throw new ForbiddenException('You can only update cars that you own')
-      }
-      if (error instanceof DuplicateLicensePlateError) {
-        throw new BadRequestException(
-          'Another car already has this license plate'
-        )
-      }
-      throw error
+      this.handleCarErrors(error)
     }
   }
 }
