@@ -1,6 +1,4 @@
 import {
-  BadRequestException,
-  ForbiddenException,
   Injectable,
   Logger,
 } from '@nestjs/common'
@@ -12,6 +10,7 @@ import { type UserID } from '../user'
 import { Car, type CarID, type CarProperties } from './car'
 import { ICarRepository } from './car.repository.interface'
 import { type ICarService } from './car.service.interface'
+import { CarAccessDeniedError, DuplicateLicensePlateError } from './error'
 
 @Injectable()
 export class CarService implements ICarService {
@@ -33,19 +32,6 @@ export class CarService implements ICarService {
 
   public async create(data: Except<CarProperties, 'id'>): Promise<Car> {
     return this.databaseConnection.transactional(async tx => {
-      if (data.licensePlate) {
-        const existingCar = await this.carRepository.findByLicensePlate(
-          tx,
-          data.licensePlate,
-        )
-
-        if (existingCar) {
-          throw new BadRequestException(
-            'A car with this license plate already exists',
-          )
-        }
-      }
-
       return this.carRepository.insert(tx, data)
     })
   }
@@ -71,7 +57,7 @@ export class CarService implements ICarService {
       const car = await this.carRepository.get(tx, carId)
 
       if (car.ownerId !== currentUserId) {
-        throw new ForbiddenException('You can only update cars that you own')
+        throw new CarAccessDeniedError(carId)
       }
 
       if (updates.licensePlate && updates.licensePlate !== car.licensePlate) {
@@ -81,9 +67,7 @@ export class CarService implements ICarService {
         )
 
         if (existingCar) {
-          throw new BadRequestException(
-            'Another car already has this license plate',
-          )
+          throw new DuplicateLicensePlateError(updates.licensePlate)
         }
       }
 

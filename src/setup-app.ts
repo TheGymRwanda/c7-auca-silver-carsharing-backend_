@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
 import {
   AccessDeniedExceptionFilter,
+  BadRequestExceptionFilter,
   NotFoundExceptionFilter,
 } from './controller'
 
@@ -51,5 +52,6 @@ export function configureGlobalEnhancers(
     )
     .useGlobalFilters(new NotFoundExceptionFilter(httpAdapter))
     .useGlobalFilters(new AccessDeniedExceptionFilter(httpAdapter))
+    .useGlobalFilters(new BadRequestExceptionFilter(httpAdapter))
     .enableShutdownHooks()
 }

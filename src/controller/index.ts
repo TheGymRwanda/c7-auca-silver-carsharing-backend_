@@ -1,5 +1,6 @@
 export * from './access-denied.exception-filter'
 export * from './authentication.guard'
+export * from './bad-request.exception-filter'
 export * from './current-user.decorator'
 export * from './not-found.exception-filter'
 export { AuthenticationController } from './authentication'
