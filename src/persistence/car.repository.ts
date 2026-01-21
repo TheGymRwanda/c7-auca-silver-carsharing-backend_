@@ -86,7 +86,7 @@ export class CarRepository implements ICarRepository {
 
   public async update(tx: Transaction, car: Car): Promise<Car> {
     await this.ensureCarExists(tx, car.id)
-    
+
     const row = await tx.oneOrNone<Row>(
       `
       UPDATE cars SET
@@ -97,7 +97,7 @@ export class CarRepository implements ICarRepository {
       WHERE
         id = $(id)
       RETURNING *`,
-      { ...car }
+      { ...car },
     )
 
     return rowToDomain(row!)

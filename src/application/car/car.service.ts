@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
 import { type Except } from 'type-fest'
 
 import { IDatabaseConnection } from '../../persistence/database-connection.interface'
@@ -80,7 +77,11 @@ export class CarService implements ICarService {
       }
 
       if (updates.licensePlate && updates.licensePlate !== car.licensePlate) {
-        await this.validateLicensePlateUniqueness(tx, updates.licensePlate, carId)
+        await this.validateLicensePlateUniqueness(
+          tx,
+          updates.licensePlate,
+          carId,
+        )
       }
 
       const updatedCar = new Car({

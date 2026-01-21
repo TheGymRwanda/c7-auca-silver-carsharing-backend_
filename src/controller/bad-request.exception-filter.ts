@@ -5,7 +5,10 @@ import { DuplicateLicensePlateError } from '../application/car/error'
 
 @Catch(DuplicateLicensePlateError)
 export class BadRequestExceptionFilter extends BaseExceptionFilter {
-  public catch(exception: DuplicateLicensePlateError, host: ArgumentsHost): void {
+  public catch(
+    exception: DuplicateLicensePlateError,
+    host: ArgumentsHost,
+  ): void {
     super.catch(new BadRequestException(exception.message), host)
   }
 }

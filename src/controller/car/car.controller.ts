@@ -30,7 +30,10 @@ import {
   ICarService,
   type User,
 } from '../../application'
-import { CarAccessDeniedError, DuplicateLicensePlateError } from '../../application/car/error'
+import {
+  CarAccessDeniedError,
+  DuplicateLicensePlateError,
+} from '../../application/car/error'
 import { AuthenticationGuard } from '../authentication.guard'
 import { CurrentUser } from '../current-user.decorator'
 
@@ -63,7 +66,7 @@ export class CarController {
     }
     if (error instanceof DuplicateLicensePlateError) {
       throw new BadRequestException(
-        'A car with this license plate already exists'
+        'A car with this license plate already exists',
       )
     }
     throw error
