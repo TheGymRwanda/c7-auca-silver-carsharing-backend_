@@ -22,6 +22,7 @@ import {
 
 import {
   Booking,
+  BookingState,
   IBookingService,
   type User,
   CarNotFoundError,
