@@ -12,7 +12,8 @@ export class BookingBuilder {
         carId: 1 as CarID,
         renterId: 1 as UserID,
         state: BookingState.PENDING,
-        startDate: new Date('2023-08-08T14:07:27')
+        startDate: new Date('2023-08-08T14:07:27'),
+        endDate: new Date('2023-08-08T14:07:27')
     }
 
     public withId(id: BookingID): this {
