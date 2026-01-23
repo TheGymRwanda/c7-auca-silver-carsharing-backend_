@@ -12,7 +12,10 @@ import { CarNotAvailableError } from './car-not-available.error'
 import { InvalidBookingDatesError } from './invalid-booking-dates.error'
 import { type IBookingRepository } from './booking.repository.interface'
 import { type ICarRepository } from '../car'
-import { type IDatabaseConnection, type Transaction } from '../../persistence/database-connection.interface'
+import {
+  type IDatabaseConnection,
+  type Transaction,
+} from '../../persistence/database-connection.interface'
 
 describe('BookingService', () => {
   let bookingService: BookingService
@@ -41,7 +44,7 @@ describe('BookingService', () => {
     mockTransaction = {} as jest.Mocked<Transaction>
 
     mockDatabaseConnection = {
-      transactional: jest.fn().mockImplementation(async (callback) => {
+      transactional: jest.fn().mockImplementation(async callback => {
         return callback(mockTransaction)
       }),
     }
@@ -85,7 +88,7 @@ describe('BookingService', () => {
         {
           ...validBookingData,
           state: BookingState.PENDING,
-        }
+        },
       )
     })
 
@@ -103,7 +106,7 @@ describe('BookingService', () => {
         mockTransaction,
         expect.objectContaining({
           state: BookingState.PENDING,
-        })
+        }),
       )
     })
 
@@ -115,7 +118,7 @@ describe('BookingService', () => {
       }
 
       await expect(bookingService.create(invalidData)).rejects.toThrow(
-        InvalidBookingDatesError
+        InvalidBookingDatesError,
       )
       expect(mockCarRepository.get).not.toHaveBeenCalled()
       expect(mockBookingRepository.insert).not.toHaveBeenCalled()
@@ -129,7 +132,7 @@ describe('BookingService', () => {
       }
 
       await expect(bookingService.create(invalidData)).rejects.toThrow(
-        InvalidBookingDatesError
+        InvalidBookingDatesError,
       )
     })
 
@@ -142,7 +145,7 @@ describe('BookingService', () => {
       }
 
       await expect(bookingService.create(invalidData)).rejects.toThrow(
-        InvalidBookingDatesError
+        InvalidBookingDatesError,
       )
     })
 
@@ -151,9 +154,11 @@ describe('BookingService', () => {
       mockCarRepository.get.mockRejectedValue(carNotFoundError)
 
       await expect(bookingService.create(validBookingData)).rejects.toThrow(
-        CarNotFoundError
+        CarNotFoundError,
       )
-      expect(mockBookingRepository.findOverlappingBookings).not.toHaveBeenCalled()
+      expect(
+        mockBookingRepository.findOverlappingBookings,
+      ).not.toHaveBeenCalled()
       expect(mockBookingRepository.insert).not.toHaveBeenCalled()
     })
 
@@ -165,10 +170,12 @@ describe('BookingService', () => {
         .build()
 
       mockCarRepository.get.mockResolvedValue({} as any)
-      mockBookingRepository.findOverlappingBookings.mockResolvedValue([overlappingBooking])
+      mockBookingRepository.findOverlappingBookings.mockResolvedValue([
+        overlappingBooking,
+      ])
 
       await expect(bookingService.create(validBookingData)).rejects.toThrow(
-        CarNotAvailableError
+        CarNotAvailableError,
       )
       expect(mockBookingRepository.insert).not.toHaveBeenCalled()
     })
@@ -180,11 +187,13 @@ describe('BookingService', () => {
 
       await bookingService.create(validBookingData)
 
-      expect(mockBookingRepository.findOverlappingBookings).toHaveBeenCalledWith(
+      expect(
+        mockBookingRepository.findOverlappingBookings,
+      ).toHaveBeenCalledWith(
         mockTransaction,
         validBookingData.carId,
         validBookingData.startDate,
-        validBookingData.endDate
+        validBookingData.endDate,
       )
     })
 
@@ -196,7 +205,7 @@ describe('BookingService', () => {
       await bookingService.create(validBookingData)
 
       expect(mockDatabaseConnection.transactional).toHaveBeenCalledWith(
-        expect.any(Function)
+        expect.any(Function),
       )
     })
 
@@ -211,10 +220,10 @@ describe('BookingService', () => {
       await bookingService.create(validBookingData)
 
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Creating booking for car')
+        expect.stringContaining('Creating booking for car'),
       )
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Successfully created booking 123')
+        expect.stringContaining('Successfully created booking 123'),
       )
     })
   })
@@ -229,7 +238,10 @@ describe('BookingService', () => {
       const result = await bookingService.get(bookingId)
 
       expect(result).toBe(expectedBooking)
-      expect(mockBookingRepository.get).toHaveBeenCalledWith(mockTransaction, bookingId)
+      expect(mockBookingRepository.get).toHaveBeenCalledWith(
+        mockTransaction,
+        bookingId,
+      )
     })
 
     it('should use database transaction', async () => {
@@ -239,7 +251,7 @@ describe('BookingService', () => {
       await bookingService.get(bookingId)
 
       expect(mockDatabaseConnection.transactional).toHaveBeenCalledWith(
-        expect.any(Function)
+        expect.any(Function),
       )
     })
   })
@@ -265,7 +277,7 @@ describe('BookingService', () => {
       await bookingService.getAll()
 
       expect(mockDatabaseConnection.transactional).toHaveBeenCalledWith(
-        expect.any(Function)
+        expect.any(Function),
       )
     })
   })
