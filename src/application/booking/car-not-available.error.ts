@@ -8,7 +8,9 @@ export class CarNotAvailableError extends CustomError {
   public readonly endDate: Date
 
   public constructor(carId: CarID, startDate: Date, endDate: Date) {
-    super(`Car ${carId} is not available from ${startDate.toISOString()} to ${endDate.toISOString()}`)
+    super(
+      `Car ${carId} is not available from ${startDate.toISOString()} to ${endDate.toISOString()}`,
+    )
     this.carId = carId
     this.startDate = startDate
     this.endDate = endDate

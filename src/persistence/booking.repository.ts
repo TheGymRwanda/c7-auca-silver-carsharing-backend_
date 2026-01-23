@@ -36,7 +36,10 @@ function rowToDomain(row: Row): Booking {
 
 @Injectable()
 export class BookingRepository implements IBookingRepository {
-  private async ensureBookingExists(tx: Transaction, id: BookingID): Promise<Booking> {
+  private async ensureBookingExists(
+    tx: Transaction,
+    id: BookingID,
+  ): Promise<Booking> {
     const booking = await this.find(tx, id)
 
     if (!booking) {
@@ -47,9 +50,12 @@ export class BookingRepository implements IBookingRepository {
   }
 
   public async find(tx: Transaction, id: BookingID): Promise<Booking | null> {
-    const row = await tx.oneOrNone<Row>('SELECT * FROM bookings WHERE id = $(id)', {
-      id,
-    })
+    const row = await tx.oneOrNone<Row>(
+      'SELECT * FROM bookings WHERE id = $(id)',
+      {
+        id,
+      },
+    )
 
     return row ? rowToDomain(row) : null
   }
@@ -59,7 +65,9 @@ export class BookingRepository implements IBookingRepository {
   }
 
   public async getAll(tx: Transaction): Promise<Booking[]> {
-    const rows = await tx.any<Row>('SELECT * FROM bookings ORDER BY start_date DESC')
+    const rows = await tx.any<Row>(
+      'SELECT * FROM bookings ORDER BY start_date DESC',
+    )
 
     return rows.map(row => rowToDomain(row))
   }
@@ -71,8 +79,10 @@ export class BookingRepository implements IBookingRepository {
     endDate: Date,
     excludeBookingId?: BookingID,
   ): Promise<Booking[]> {
-    const excludeClause = excludeBookingId ? 'AND id != $(excludeBookingId)' : ''
-    
+    const excludeClause = excludeBookingId
+      ? 'AND id != $(excludeBookingId)'
+      : ''
+
     const rows = await tx.any<Row>(
       `
       SELECT * FROM bookings 

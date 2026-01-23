@@ -8,9 +8,7 @@ export class BookingServiceMock implements IBookingService {
   private bookings: Booking[] = []
   private nextId = 1
 
-  public async create(
-    data: Except<BookingProperties, 'id'>,
-  ): Promise<Booking> {
+  public async create(data: Except<BookingProperties, 'id'>): Promise<Booking> {
     const booking = new BookingBuilder()
       .withId(this.nextId++ as BookingID)
       .withCarId(data.carId)

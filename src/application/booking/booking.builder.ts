@@ -3,20 +3,20 @@ import { type Except } from 'type-fest'
 import { type CarID } from '../car'
 import { type UserID } from '../user'
 
-import {Booking, type BookingID, type BookingProperties} from './booking'
+import { Booking, type BookingID, type BookingProperties } from './booking'
 import { BookingState } from './booking-state'
 
 export class BookingBuilder {
-    private data: BookingProperties = {
-        id: 1 as BookingID,
-        carId: 1 as CarID,
-        renterId: 1 as UserID,
-        state: BookingState.PENDING,
-        startDate: new Date('2023-08-08T14:07:27.828Z'),
-        endDate: new Date('2023-08-09T07:20:56.959Z')
-    }
+  private data: BookingProperties = {
+    id: 1 as BookingID,
+    carId: 1 as CarID,
+    renterId: 1 as UserID,
+    state: BookingState.PENDING,
+    startDate: new Date('2023-08-08T14:07:27.828Z'),
+    endDate: new Date('2023-08-09T07:20:56.959Z'),
+  }
 
-    public withId(id: BookingID): this {
+  public withId(id: BookingID): this {
     this.data.id = id
     return this
   }

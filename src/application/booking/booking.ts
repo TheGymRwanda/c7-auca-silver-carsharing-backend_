@@ -29,7 +29,7 @@ export class Booking {
   @IsPositive()
   public readonly renterId: UserID
 
-  @IsEnum()
+  @IsEnum(BookingState)
   public readonly state: BookingState
 
   public readonly startDate: Date
