@@ -1,0 +1,13 @@
+import { type Except } from 'type-fest'
+
+import { type Booking, type BookingID, type BookingProperties } from './booking'
+
+export abstract class IBookingService {
+  public abstract create(
+    data: Except<BookingProperties, 'id'>,
+  ): Promise<Booking>
+
+  public abstract get(id: BookingID): Promise<Booking>
+
+  public abstract getAll(): Promise<Booking[]>
+}
