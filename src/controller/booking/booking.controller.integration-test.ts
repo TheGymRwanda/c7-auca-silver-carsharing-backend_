@@ -434,4 +434,96 @@ describe('BookingController (Integration)', () => {
       })
     })
   })
+
+  describe('GET /bookings/:id', () => {
+    let bookingId: number
+
+    beforeEach(async () => {
+      await databaseConnection.transactional(async (tx: Transaction) => {
+        const result = await tx.one(
+          `INSERT INTO bookings (car_id, renter_id, state, start_date, end_date) 
+           VALUES ($1, $2, $3, $4, $5) 
+           RETURNING id`,
+          [1, 1, BookingState.PENDING, getFutureDate(24), getFutureDate(48)],
+        )
+        bookingId = result.id
+      })
+    })
+
+    describe('Authorization (200/403)', () => {
+      it('should return 200 when user is the renter', async () => {
+        const token = generateJwtToken(1 as UserID)
+
+        const response = await request(app.getHttpServer())
+          .get(`/bookings/${bookingId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200)
+
+        expect(response.body).toMatchObject({
+          id: bookingId,
+          carId: 1,
+          renterId: 1,
+          state: BookingState.PENDING,
+        })
+      })
+
+      it('should return 200 when user is the car owner', async () => {
+        const token = generateJwtToken(2 as UserID)
+
+        const response = await request(app.getHttpServer())
+          .get(`/bookings/${bookingId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(200)
+
+        expect(response.body).toMatchObject({
+          id: bookingId,
+          carId: 1,
+          renterId: 1,
+          state: BookingState.PENDING,
+        })
+      })
+
+      it('should return 403 when user is neither renter nor car owner', async () => {
+        await databaseConnection.transactional(async (tx: Transaction) => {
+          await tx.none(
+            'INSERT INTO users (id, name, password) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING',
+            [3, 'thirduser', 'hashedpassword'],
+          )
+        })
+
+        const token = generateJwtToken(3 as UserID)
+
+        await request(app.getHttpServer())
+          .get(`/bookings/${bookingId}`)
+          .set('Authorization', `Bearer ${token}`)
+          .expect(403)
+      })
+    })
+
+    describe('Not found (404)', () => {
+      it('should return 404 when booking does not exist', async () => {
+        const token = generateJwtToken(1 as UserID)
+
+        await request(app.getHttpServer())
+          .get('/bookings/999')
+          .set('Authorization', `Bearer ${token}`)
+          .expect(404)
+      })
+    })
+
+    describe('Authentication (401)', () => {
+      it('should return 401 when no JWT token provided', async () => {
+        await request(app.getHttpServer())
+          .get(`/bookings/${bookingId}`)
+          .expect(401)
+      })
+
+      it('should return 401 when invalid JWT token provided', async () => {
+        await request(app.getHttpServer())
+          .get(`/bookings/${bookingId}`)
+          .set('Authorization', 'Bearer invalid-token')
+          .expect(401)
+      })
+    })
+  })
 })

@@ -3,6 +3,7 @@ import { BadRequestException, ConflictException } from '@nestjs/common'
 import {
   type BookingID,
   BookingState,
+  BookingAccessDeniedError,
   CarNotAvailableError,
   InvalidBookingDatesError,
   type CarID,
@@ -73,6 +74,8 @@ describe('BookingController', () => {
   })
 
   describe('getOne', () => {
+    const user = new UserBuilder().withId(42).build()
+
     it('should return a single booking as DTO', async () => {
       const booking = new BookingBuilder()
         .withId(1 as BookingID)
@@ -85,14 +88,14 @@ describe('BookingController', () => {
 
       bookingServiceMock.get.mockResolvedValue(booking)
 
-      const result = await bookingController.getOne(1 as BookingID)
+      const result = await bookingController.getOne(user, 1 as BookingID)
 
       expect(result).toBeInstanceOf(BookingDTO)
       expect(result.id).toBe(1)
       expect(result.carId).toBe(10)
       expect(result.renterId).toBe(20)
       expect(result.state).toBe(BookingState.CONFIRMED)
-      expect(bookingServiceMock.get).toHaveBeenCalledWith(1)
+      expect(bookingServiceMock.get).toHaveBeenCalledWith(1 as BookingID, user.id)
       expect(bookingServiceMock.get).toHaveBeenCalledTimes(1)
     })
 
@@ -103,7 +106,7 @@ describe('BookingController', () => {
       const booking = new BookingBuilder()
         .withId(1 as BookingID)
         .withCarId(10 as CarID)
-        .withRenterId(20 as UserID)
+        .withRenterId(user.id)
         .withState(BookingState.CONFIRMED)
         .withStartDate(startDate)
         .withEndDate(endDate)
@@ -111,10 +114,21 @@ describe('BookingController', () => {
 
       bookingServiceMock.get.mockResolvedValue(booking)
 
-      const result = await bookingController.getOne(1 as BookingID)
+      const result = await bookingController.getOne(user, 1 as BookingID)
 
       expect(result.startDate).toBe(startDate.toISOString())
       expect(result.endDate).toBe(endDate.toISOString())
+    })
+
+    it('should throw BookingAccessDeniedError when user is not authorized', async () => {
+      bookingServiceMock.get.mockRejectedValue(
+        new BookingAccessDeniedError(1 as BookingID),
+      )
+
+      await expect(
+        bookingController.getOne(user, 1 as BookingID),
+      ).rejects.toThrow(BookingAccessDeniedError)
+      expect(bookingServiceMock.get).toHaveBeenCalledWith(1 as BookingID, user.id)
     })
   })
 
