@@ -17,6 +17,7 @@
     "format:eslint": "eslint --fix '{src,migrations,test}/**/*.ts'",
     "format:prettier": "prettier --write '{src,migrations,test}/**/*.{ts,json}'",
     "start": "docker compose up -d",
+    "db:start": "docker compose up -d postgres",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main",
