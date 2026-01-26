@@ -8,6 +8,7 @@ import { Booking } from './booking'
 import { BookingBuilder } from './booking.builder'
 import { BookingState } from './booking-state'
 import { BookingService } from './booking.service'
+import { BookingAccessDeniedError } from './booking-access-denied.error'
 import { CarNotAvailableError } from './car-not-available.error'
 import { InvalidBookingDatesError } from './invalid-booking-dates.error'
 import { type IBookingRepository } from './booking.repository.interface'
@@ -229,26 +230,106 @@ describe('BookingService', () => {
   })
 
   describe('get', () => {
-    it('should return booking from repository', async () => {
+    it('should return booking when user is the renter', async () => {
+      const renterId = 42 as UserID
+      const carId = 10 as CarID
       const bookingId = 123 as any
-      const expectedBooking = new BookingBuilder().withId(bookingId).build()
+      const expectedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withCarId(carId)
+        .withRenterId(renterId)
+        .build()
 
       mockBookingRepository.get.mockResolvedValue(expectedBooking)
+      mockCarRepository.get.mockResolvedValue({
+        ownerId: 999 as UserID,
+      } as any)
 
-      const result = await bookingService.get(bookingId)
+      const result = await bookingService.get(bookingId, renterId)
 
       expect(result).toBe(expectedBooking)
       expect(mockBookingRepository.get).toHaveBeenCalledWith(
         mockTransaction,
         bookingId,
       )
+      expect(mockCarRepository.get).toHaveBeenCalledWith(
+        mockTransaction,
+        carId,
+      )
+    })
+
+    it('should return booking when user is the car owner', async () => {
+      const ownerId = 99 as UserID
+      const carId = 10 as CarID
+      const bookingId = 123 as any
+      const expectedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withCarId(carId)
+        .withRenterId(42 as UserID)
+        .build()
+
+      mockBookingRepository.get.mockResolvedValue(expectedBooking)
+      mockCarRepository.get.mockResolvedValue({
+        ownerId: ownerId,
+      } as any)
+
+      const result = await bookingService.get(bookingId, ownerId)
+
+      expect(result).toBe(expectedBooking)
+      expect(mockBookingRepository.get).toHaveBeenCalledWith(
+        mockTransaction,
+        bookingId,
+      )
+      expect(mockCarRepository.get).toHaveBeenCalledWith(
+        mockTransaction,
+        carId,
+      )
+    })
+
+    it('should throw BookingAccessDeniedError when user is neither renter nor owner', async () => {
+      const unauthorizedUserId = 777 as UserID
+      const carId = 10 as CarID
+      const bookingId = 123 as any
+      const expectedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withCarId(carId)
+        .withRenterId(42 as UserID)
+        .build()
+
+      mockBookingRepository.get.mockResolvedValue(expectedBooking)
+      mockCarRepository.get.mockResolvedValue({
+        ownerId: 99 as UserID,
+      } as any)
+
+      await expect(
+        bookingService.get(bookingId, unauthorizedUserId),
+      ).rejects.toThrow(BookingAccessDeniedError)
+      expect(mockBookingRepository.get).toHaveBeenCalledWith(
+        mockTransaction,
+        bookingId,
+      )
+      expect(mockCarRepository.get).toHaveBeenCalledWith(
+        mockTransaction,
+        carId,
+      )
     })
 
     it('should use database transaction', async () => {
       const bookingId = 123 as any
-      mockBookingRepository.get.mockResolvedValue({} as any)
+      const userId = 42 as UserID
+      const carId = 10 as CarID
+      mockBookingRepository.get.mockResolvedValue(
+        new BookingBuilder()
+          .withId(bookingId)
+          .withCarId(carId)
+          .withRenterId(userId)
+          .build(),
+      )
+      mockCarRepository.get.mockResolvedValue({
+        ownerId: 999 as UserID,
+      } as any)
 
-      await bookingService.get(bookingId)
+      await bookingService.get(bookingId, userId)
 
       expect(mockDatabaseConnection.transactional).toHaveBeenCalledWith(
         expect.any(Function),
