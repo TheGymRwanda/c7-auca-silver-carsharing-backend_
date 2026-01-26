@@ -97,11 +97,16 @@ export class BookingController {
   @ApiNotFoundResponse({
     description: 'No booking with the given id was found.',
   })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied. You can only view bookings where you are the renter or car owner.',
+  })
   @Get(':id')
   public async getOne(
+    @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: BookingID,
   ): Promise<BookingDTO> {
-    const booking = await this.bookingService.get(id)
+    const booking = await this.bookingService.get(id, user.id)
     return BookingDTO.fromModel(booking)
   }
 
