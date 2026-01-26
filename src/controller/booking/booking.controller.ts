@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Get,
+  Param,
+  ParseIntPipe,
   Post,
   UseGuards,
   BadRequestException,
   ConflictException,
-  NotFoundException,
 } from '@nestjs/common'
 import {
   ApiBadRequestResponse,
@@ -15,6 +17,7 @@ import {
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
@@ -22,10 +25,10 @@ import {
 
 import {
   Booking,
+  type BookingID,
   BookingState,
   IBookingService,
   type User,
-  CarNotFoundError,
   CarNotAvailableError,
   InvalidBookingDatesError,
 } from '../../application'
@@ -60,15 +63,46 @@ export class BookingController {
     if (error instanceof InvalidBookingDatesError) {
       throw new BadRequestException(error.message)
     }
-    if (error instanceof CarNotFoundError) {
-      throw new NotFoundException('Car not found')
-    }
     if (error instanceof CarNotAvailableError) {
       throw new ConflictException(
         'The car is not available in the requested time slot',
       )
     }
     throw error
+  }
+
+  @ApiOperation({
+    summary: 'Retrieve all bookings.',
+  })
+  @ApiOkResponse({
+    description: 'The request was successful.',
+    type: [BookingDTO],
+  })
+  @Get()
+  public async getAll(): Promise<BookingDTO[]> {
+    const bookings = await this.bookingService.getAll()
+    return bookings.map(booking => BookingDTO.fromModel(booking))
+  }
+
+  @ApiOperation({
+    summary: 'Retrieve a booking by id.',
+  })
+  @ApiOkResponse({
+    description: 'The request was successful.',
+    type: BookingDTO,
+  })
+  @ApiBadRequestResponse({
+    description: 'The booking id parameter is missing or invalid.',
+  })
+  @ApiNotFoundResponse({
+    description: 'No booking with the given id was found.',
+  })
+  @Get(':id')
+  public async getOne(
+    @Param('id', ParseIntPipe) id: BookingID,
+  ): Promise<BookingDTO> {
+    const booking = await this.bookingService.get(id)
+    return BookingDTO.fromModel(booking)
   }
 
   @ApiOperation({
