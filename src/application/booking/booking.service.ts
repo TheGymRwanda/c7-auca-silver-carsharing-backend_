@@ -4,6 +4,7 @@ import { type Except } from 'type-fest'
 import { IDatabaseConnection } from '../../persistence/database-connection.interface'
 import { type Transaction } from '../../persistence/database-connection.interface'
 import { type CarID, ICarRepository } from '../car'
+import { type UserID } from '../user'
 
 import {
   Booking,
@@ -11,6 +12,7 @@ import {
   type BookingProperties,
   BookingState,
   IBookingRepository,
+  BookingAccessDeniedError,
   CarNotAvailableError,
   InvalidBookingDatesError,
 } from './index'
@@ -105,9 +107,20 @@ export class BookingService implements IBookingService {
     })
   }
 
-  public async get(id: BookingID): Promise<Booking> {
+  public async get(id: BookingID, userId: UserID): Promise<Booking> {
     return this.databaseConnection.transactional(async tx => {
-      return this.bookingRepository.get(tx, id)
+      const booking = await this.bookingRepository.get(tx, id)
+
+      const car = await this.carRepository.get(tx, booking.carId)
+
+      const isRenter = booking.renterId === userId
+      const isOwner = car.ownerId === userId
+
+      if (!isRenter && !isOwner) {
+        throw new BookingAccessDeniedError(id)
+      }
+
+      return booking
     })
   }
 
