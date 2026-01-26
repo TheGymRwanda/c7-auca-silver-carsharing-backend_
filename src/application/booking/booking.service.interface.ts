@@ -1,5 +1,7 @@
 import { type Except } from 'type-fest'
 
+import { type UserID } from '../user'
+
 import { type Booking, type BookingID, type BookingProperties } from './booking'
 
 export abstract class IBookingService {
@@ -7,7 +9,7 @@ export abstract class IBookingService {
     data: Except<BookingProperties, 'id'>,
   ): Promise<Booking>
 
-  public abstract get(id: BookingID): Promise<Booking>
+  public abstract get(id: BookingID, userId: UserID): Promise<Booking>
 
   public abstract getAll(): Promise<Booking[]>
 }
