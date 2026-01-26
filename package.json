@@ -23,7 +23,7 @@
     "start:prod": "node dist/src/main",
     "db:migrate-up": "docker exec carsharing-backend node -r ts-node/register ./node_modules/node-pg-migrate/bin/node-pg-migrate up --config node-pg-migrate.config.ts",
     "db:migrate-down": "docker exec carsharing-backend node -r ts-node/register ./node_modules/node-pg-migrate/bin/node-pg-migrate down --config node-pg-migrate.config.ts",
-    "db:load-fixture": "docker compose exec postgres sh -c \"find /fixture -type f | sort | xargs -I {} psql --username=postgres --dbname carsharing_db -f {}\"",
+    "db:load-fixture": "docker compose exec postgres sh -c \"find /fixture -type f | sort | xargs -I {} psql -U $POSTGRES_USER -d $POSTGRES_DB -f {}\"",
     "lint": "npm run lint:tsc && npm run lint:eslint && npm run lint:prettier",
     "lint:eslint": "eslint \"{src,migrations,test}/**/*.ts\"",
     "lint:prettier": "prettier --check '{src,migrations,test}/**/*.{ts,json}'",
