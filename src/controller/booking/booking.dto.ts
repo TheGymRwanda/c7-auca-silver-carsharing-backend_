@@ -9,7 +9,7 @@ import {
   type CarID,
   type UserID,
 } from '../../application'
-import { validate } from '../../util'
+import { StrictPartialType, validate } from '../../util'
 
 export class BookingDTO {
   @ApiProperty({
@@ -106,3 +106,7 @@ export class CreateBookingDTO extends PickType(BookingDTO, [
   'startDate',
   'endDate',
 ] as const) {}
+
+export class PatchBookingDTO extends StrictPartialType(
+  PickType(BookingDTO, ['state', 'startDate', 'endDate'] as const),
+) {}

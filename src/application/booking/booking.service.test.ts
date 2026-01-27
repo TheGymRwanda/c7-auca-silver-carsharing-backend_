@@ -252,10 +252,7 @@ describe('BookingService', () => {
         mockTransaction,
         bookingId,
       )
-      expect(mockCarRepository.get).toHaveBeenCalledWith(
-        mockTransaction,
-        carId,
-      )
+      expect(mockCarRepository.get).toHaveBeenCalledWith(mockTransaction, carId)
     })
 
     it('should return booking when user is the car owner', async () => {
@@ -280,10 +277,7 @@ describe('BookingService', () => {
         mockTransaction,
         bookingId,
       )
-      expect(mockCarRepository.get).toHaveBeenCalledWith(
-        mockTransaction,
-        carId,
-      )
+      expect(mockCarRepository.get).toHaveBeenCalledWith(mockTransaction, carId)
     })
 
     it('should throw BookingAccessDeniedError when user is neither renter nor owner', async () => {
@@ -308,10 +302,7 @@ describe('BookingService', () => {
         mockTransaction,
         bookingId,
       )
-      expect(mockCarRepository.get).toHaveBeenCalledWith(
-        mockTransaction,
-        carId,
-      )
+      expect(mockCarRepository.get).toHaveBeenCalledWith(mockTransaction, carId)
     })
 
     it('should use database transaction', async () => {

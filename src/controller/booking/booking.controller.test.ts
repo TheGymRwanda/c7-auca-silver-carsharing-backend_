@@ -95,7 +95,10 @@ describe('BookingController', () => {
       expect(result.carId).toBe(10)
       expect(result.renterId).toBe(20)
       expect(result.state).toBe(BookingState.CONFIRMED)
-      expect(bookingServiceMock.get).toHaveBeenCalledWith(1 as BookingID, user.id)
+      expect(bookingServiceMock.get).toHaveBeenCalledWith(
+        1 as BookingID,
+        user.id,
+      )
       expect(bookingServiceMock.get).toHaveBeenCalledTimes(1)
     })
 
@@ -128,7 +131,10 @@ describe('BookingController', () => {
       await expect(
         bookingController.getOne(user, 1 as BookingID),
       ).rejects.toThrow(BookingAccessDeniedError)
-      expect(bookingServiceMock.get).toHaveBeenCalledWith(1 as BookingID, user.id)
+      expect(bookingServiceMock.get).toHaveBeenCalledWith(
+        1 as BookingID,
+        user.id,
+      )
     })
   })
 

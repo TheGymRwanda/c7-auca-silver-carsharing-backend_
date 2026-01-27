@@ -12,4 +12,10 @@ export abstract class IBookingService {
   public abstract get(id: BookingID, userId: UserID): Promise<Booking>
 
   public abstract getAll(): Promise<Booking[]>
+
+  public abstract update(
+    id: BookingID,
+    updates: Partial<Except<BookingProperties, 'id' | 'carId' | 'renterId'>>,
+    userId: UserID,
+  ): Promise<Booking>
 }
