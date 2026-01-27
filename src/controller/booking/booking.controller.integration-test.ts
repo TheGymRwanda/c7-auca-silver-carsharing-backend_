@@ -31,11 +31,12 @@ describe('BookingController (Integration)', () => {
 
     // Override environment variables BEFORE creating the module
     const originalEnv = { ...process.env }
-    process.env.DATABASE_HOST = container.getHost()
-    process.env.DATABASE_PORT = container.getPort().toString()
-    process.env.DATABASE_NAME = container.getDatabase()
-    process.env.DATABASE_USERNAME = container.getUsername()
-    process.env.DATABASE_PASSWORD = container.getPassword()
+    process.env.DB_HOST = container.getHost()
+    process.env.DB_PORT = container.getPort().toString()
+    process.env.DB_NAME = container.getDatabase()
+    process.env.DB_USER = container.getUsername()
+    process.env.DB_PASS = container.getPassword()
+    process.env.DB_SSL = '0'
     process.env.JWT_SECRET = 'test-secret-key-for-integration-tests'
 
     const moduleRef = await Test.createTestingModule({
