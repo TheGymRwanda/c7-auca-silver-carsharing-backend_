@@ -11,6 +11,8 @@ import { BookingService } from './booking.service'
 import { BookingAccessDeniedError } from './booking-access-denied.error'
 import { CarNotAvailableError } from './car-not-available.error'
 import { InvalidBookingDatesError } from './invalid-booking-dates.error'
+import { InvalidBookingStateTransitionError } from './invalid-booking-state-transition.error'
+import { BookingStateTransitionValidator } from './booking-state-transition.validator'
 import { type IBookingRepository } from './booking.repository.interface'
 import { type ICarRepository } from '../car'
 import {
@@ -494,6 +496,55 @@ describe('BookingService', () => {
       ).rejects.toThrow(CarNotAvailableError)
 
       expect(mockBookingRepository.update).not.toHaveBeenCalled()
+    })
+
+    it('should throw InvalidBookingStateTransitionError when state transition is invalid', async () => {
+      jest
+        .spyOn(BookingStateTransitionValidator, 'validate')
+        .mockImplementation(() => {
+          throw new InvalidBookingStateTransitionError(
+            bookingId,
+            BookingState.PENDING,
+            BookingState.PICKED_UP,
+          )
+        })
+
+      await expect(
+        bookingService.update(
+          bookingId,
+          { state: BookingState.PICKED_UP },
+          renterId,
+        ),
+      ).rejects.toThrow(InvalidBookingStateTransitionError)
+
+      expect(mockBookingRepository.update).not.toHaveBeenCalled()
+    })
+
+    it('should allow valid state transitions', async () => {
+      jest
+        .spyOn(BookingStateTransitionValidator, 'validate')
+        .mockImplementation(() => {})
+
+      const updatedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withState(BookingState.CONFIRMED)
+        .build()
+
+      mockBookingRepository.update.mockResolvedValue(updatedBooking)
+
+      const result = await bookingService.update(
+        bookingId,
+        { state: BookingState.CONFIRMED },
+        ownerId,
+      )
+
+      expect(result).toBe(updatedBooking)
+      expect(BookingStateTransitionValidator.validate).toHaveBeenCalledWith(
+        BookingState.PENDING,
+        BookingState.CONFIRMED,
+        'OWNER',
+        bookingId,
+      )
     })
   })
 })

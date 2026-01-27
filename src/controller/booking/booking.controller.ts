@@ -34,6 +34,7 @@ import {
   CarNotAvailableError,
   InvalidBookingDatesError,
   BookingAccessDeniedError,
+  InvalidBookingStateTransitionError,
 } from '../../application'
 import { AuthenticationGuard } from '../authentication.guard'
 import { CurrentUser } from '../current-user.decorator'
@@ -70,6 +71,9 @@ export class BookingController {
       throw new BadRequestException(
         'The car is not available in the requested time slot',
       )
+    }
+    if (error instanceof InvalidBookingStateTransitionError) {
+      throw new BadRequestException(error.message)
     }
     if (error instanceof BookingAccessDeniedError) {
       throw new UnauthorizedException(
@@ -161,7 +165,7 @@ export class BookingController {
   })
   @ApiBadRequestResponse({
     description:
-      'The request was malformed, e.g. missing or invalid parameter or property in the request body, or the car is not available in the requested time slot.',
+      'The request was malformed, e.g. missing or invalid parameter or property in the request body, the car is not available in the requested time slot, or the booking state transition is invalid.',
   })
   @ApiNotFoundResponse({
     description: 'No booking with the given id was found.',

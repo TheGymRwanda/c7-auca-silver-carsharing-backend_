@@ -10,6 +10,7 @@ import {
   BookingAccessDeniedError,
   CarNotAvailableError,
   InvalidBookingDatesError,
+  InvalidBookingStateTransitionError,
   type CarID,
   type UserID,
 } from '../../application'
@@ -369,6 +370,21 @@ describe('BookingController', () => {
       ).rejects.toThrow(BadRequestException)
     })
 
+    it('should throw BadRequestException when state transition is invalid', async () => {
+      bookingServiceMock.update.mockRejectedValue(
+        new InvalidBookingStateTransitionError(
+          bookingId,
+          BookingState.RETURNED,
+          BookingState.PENDING,
+        ),
+      )
+
+      await expect(
+        bookingController.patch(user, bookingId, {
+          state: BookingState.PENDING,
+        }),
+      ).rejects.toThrow(BadRequestException)
+    })
     it('should throw BadRequestException when dates are invalid', async () => {
       bookingServiceMock.update.mockRejectedValue(
         new InvalidBookingDatesError(

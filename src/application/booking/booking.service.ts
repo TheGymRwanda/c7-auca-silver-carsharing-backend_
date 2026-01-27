@@ -15,6 +15,7 @@ import {
   BookingAccessDeniedError,
   CarNotAvailableError,
   InvalidBookingDatesError,
+  BookingStateTransitionValidator,
 } from './index'
 import { type IBookingService } from './booking.service.interface'
 
@@ -146,6 +147,16 @@ export class BookingService implements IBookingService {
 
       if (!isRenter && !isOwner) {
         throw new BookingAccessDeniedError(id)
+      }
+
+      if (updates.state) {
+        const userRole = isOwner ? 'OWNER' : 'RENTER'
+        BookingStateTransitionValidator.validate(
+          booking.state,
+          updates.state,
+          userRole,
+          id,
+        )
       }
 
       if (updates.startDate || updates.endDate) {
