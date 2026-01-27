@@ -61,6 +61,7 @@ export class BookingService implements IBookingService {
     carId: CarID,
     startDate: Date,
     endDate: Date,
+    excludeBookingId?: BookingID,
   ): Promise<void> {
     await this.carRepository.get(tx, carId)
 
@@ -70,6 +71,7 @@ export class BookingService implements IBookingService {
         carId,
         startDate,
         endDate,
+        excludeBookingId,
       )
 
     if (overlappingBookings.length > 0) {
@@ -127,6 +129,46 @@ export class BookingService implements IBookingService {
   public async getAll(): Promise<Booking[]> {
     return this.databaseConnection.transactional(async tx => {
       return this.bookingRepository.getAll(tx)
+    })
+  }
+
+  public async update(
+    id: BookingID,
+    updates: Partial<Except<BookingProperties, 'id' | 'carId' | 'renterId'>>,
+    userId: UserID,
+  ): Promise<Booking> {
+    return this.databaseConnection.transactional(async tx => {
+      const booking = await this.bookingRepository.get(tx, id)
+      const car = await this.carRepository.get(tx, booking.carId)
+
+      const isRenter = booking.renterId === userId
+      const isOwner = car.ownerId === userId
+
+      if (!isRenter && !isOwner) {
+        throw new BookingAccessDeniedError(id)
+      }
+
+      if (updates.startDate || updates.endDate) {
+        const startDate = updates.startDate || booking.startDate
+        const endDate = updates.endDate || booking.endDate
+
+        this.validateBookingDates(startDate, endDate)
+        await this.validateCarAvailability(
+          tx,
+          booking.carId,
+          startDate,
+          endDate,
+          id,
+        )
+      }
+
+      const updatedBooking = new Booking({
+        ...booking,
+        ...updates,
+        id,
+      })
+
+      return this.bookingRepository.update(tx, updatedBooking)
     })
   }
 }
