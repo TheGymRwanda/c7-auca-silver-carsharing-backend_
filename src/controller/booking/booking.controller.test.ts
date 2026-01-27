@@ -1,7 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common'
 
 import {
@@ -128,14 +128,14 @@ describe('BookingController', () => {
       expect(result.endDate).toBe(endDate.toISOString())
     })
 
-    it('should throw BookingAccessDeniedError when user is not authorized', async () => {
+    it('should throw UnauthorizedException when user is not authorized', async () => {
       bookingServiceMock.get.mockRejectedValue(
         new BookingAccessDeniedError(1 as BookingID),
       )
 
       await expect(
         bookingController.getOne(user, 1 as BookingID),
-      ).rejects.toThrow(BookingAccessDeniedError)
+      ).rejects.toThrow(UnauthorizedException)
       expect(bookingServiceMock.get).toHaveBeenCalledWith(
         1 as BookingID,
         user.id,
@@ -345,7 +345,7 @@ describe('BookingController', () => {
       )
     })
 
-    it('should throw ForbiddenException when access is denied', async () => {
+    it('should throw UnauthorizedException when access is denied', async () => {
       bookingServiceMock.update.mockRejectedValue(
         new BookingAccessDeniedError(bookingId),
       )
@@ -354,7 +354,7 @@ describe('BookingController', () => {
         bookingController.patch(user, bookingId, {
           state: BookingState.CONFIRMED,
         }),
-      ).rejects.toThrow(ForbiddenException)
+      ).rejects.toThrow(UnauthorizedException)
     })
 
     it('should throw ConflictException when car is not available', async () => {

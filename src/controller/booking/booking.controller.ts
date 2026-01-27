@@ -9,7 +9,7 @@ import {
   UseGuards,
   BadRequestException,
   ConflictException,
-  ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common'
 import {
   ApiBadRequestResponse,
@@ -72,7 +72,7 @@ export class BookingController {
       )
     }
     if (error instanceof BookingAccessDeniedError) {
-      throw new ForbiddenException(
+      throw new UnauthorizedException(
         'Access denied. You can only update bookings where you are the renter or car owner.',
       )
     }
@@ -105,7 +105,7 @@ export class BookingController {
   @ApiNotFoundResponse({
     description: 'No booking with the given id was found.',
   })
-  @ApiForbiddenResponse({
+  @ApiUnauthorizedResponse({
     description:
       'Access denied. You can only view bookings where you are the renter or car owner.',
   })
@@ -169,7 +169,7 @@ export class BookingController {
   @ApiNotFoundResponse({
     description: 'No booking with the given id was found.',
   })
-  @ApiForbiddenResponse({
+  @ApiUnauthorizedResponse({
     description:
       'Access denied. You can only update bookings where you are the renter or car owner.',
   })
