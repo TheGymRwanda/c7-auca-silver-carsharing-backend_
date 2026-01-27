@@ -4,10 +4,12 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UseGuards,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common'
 import {
   ApiBadRequestResponse,
@@ -31,11 +33,12 @@ import {
   type User,
   CarNotAvailableError,
   InvalidBookingDatesError,
+  BookingAccessDeniedError,
 } from '../../application'
 import { AuthenticationGuard } from '../authentication.guard'
 import { CurrentUser } from '../current-user.decorator'
 
-import { BookingDTO, CreateBookingDTO } from './booking.dto'
+import { BookingDTO, CreateBookingDTO, PatchBookingDTO } from './booking.dto'
 
 @ApiTags(Booking.name)
 @ApiBearerAuth()
@@ -66,6 +69,11 @@ export class BookingController {
     if (error instanceof CarNotAvailableError) {
       throw new ConflictException(
         'The car is not available in the requested time slot',
+      )
+    }
+    if (error instanceof BookingAccessDeniedError) {
+      throw new ForbiddenException(
+        'Access denied. You can only update bookings where you are the renter or car owner.',
       )
     }
     throw error
@@ -140,6 +148,50 @@ export class BookingController {
         endDate: new Date(data.endDate),
         state: BookingState.PENDING,
       })
+
+      return BookingDTO.fromModel(booking)
+    } catch (error) {
+      this.handleBookingErrors(error)
+    }
+  }
+
+  @ApiOperation({
+    summary: 'Update an existing booking.',
+  })
+  @ApiOkResponse({
+    description: 'The booking was updated.',
+    type: BookingDTO,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'The request was malformed, e.g. missing or invalid parameter or property in the request body.',
+  })
+  @ApiNotFoundResponse({
+    description: 'No booking with the given id was found.',
+  })
+  @ApiForbiddenResponse({
+    description:
+      'Access denied. You can only update bookings where you are the renter or car owner.',
+  })
+  @ApiConflictResponse({
+    description: 'The car is not available in the requested time slot.',
+  })
+  @Patch(':id')
+  public async patch(
+    @CurrentUser() user: User,
+    @Param('id', ParseIntPipe) id: BookingID,
+    @Body() data: PatchBookingDTO,
+  ): Promise<BookingDTO> {
+    try {
+      const booking = await this.bookingService.update(
+        id,
+        {
+          state: data.state,
+          startDate: data.startDate ? new Date(data.startDate) : undefined,
+          endDate: data.endDate ? new Date(data.endDate) : undefined,
+        },
+        user.id,
+      )
 
       return BookingDTO.fromModel(booking)
     } catch (error) {
