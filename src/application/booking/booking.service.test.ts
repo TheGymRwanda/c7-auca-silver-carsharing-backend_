@@ -195,6 +195,7 @@ describe('BookingService', () => {
         validBookingData.carId,
         validBookingData.startDate,
         validBookingData.endDate,
+        undefined,
       )
     })
 
@@ -359,7 +360,7 @@ describe('BookingService', () => {
     const renterId = 42 as UserID
     const ownerId = 99 as UserID
     const carId = 10 as CarID
-    
+
     const existingBooking = new BookingBuilder()
       .withId(bookingId)
       .withCarId(carId)
@@ -379,7 +380,7 @@ describe('BookingService', () => {
         .withId(bookingId)
         .withState(BookingState.PICKED_UP)
         .build()
-      
+
       mockBookingRepository.update.mockResolvedValue(updatedBooking)
 
       const result = await bookingService.update(
@@ -400,7 +401,7 @@ describe('BookingService', () => {
         .withId(bookingId)
         .withState(BookingState.CONFIRMED)
         .build()
-      
+
       mockBookingRepository.update.mockResolvedValue(updatedBooking)
 
       const result = await bookingService.update(
@@ -426,7 +427,7 @@ describe('BookingService', () => {
           unauthorizedUserId,
         ),
       ).rejects.toThrow(BookingAccessDeniedError)
-      
+
       expect(mockBookingRepository.update).not.toHaveBeenCalled()
     })
 
@@ -438,7 +439,7 @@ describe('BookingService', () => {
         .withStartDate(newStartDate)
         .withEndDate(newEndDate)
         .build()
-      
+
       mockBookingRepository.findOverlappingBookings.mockResolvedValue([])
       mockBookingRepository.update.mockResolvedValue(updatedBooking)
 
@@ -449,7 +450,9 @@ describe('BookingService', () => {
       )
 
       expect(result).toBe(updatedBooking)
-      expect(mockBookingRepository.findOverlappingBookings).toHaveBeenCalledWith(
+      expect(
+        mockBookingRepository.findOverlappingBookings,
+      ).toHaveBeenCalledWith(
         mockTransaction,
         carId,
         newStartDate,
@@ -469,7 +472,7 @@ describe('BookingService', () => {
           renterId,
         ),
       ).rejects.toThrow(InvalidBookingDatesError)
-      
+
       expect(mockBookingRepository.update).not.toHaveBeenCalled()
     })
 
@@ -477,8 +480,10 @@ describe('BookingService', () => {
       const newStartDate = new Date('2026-03-01T10:00:00Z')
       const newEndDate = new Date('2026-03-05T10:00:00Z')
       const overlappingBooking = new BookingBuilder().withId(456 as any).build()
-      
-      mockBookingRepository.findOverlappingBookings.mockResolvedValue([overlappingBooking])
+
+      mockBookingRepository.findOverlappingBookings.mockResolvedValue([
+        overlappingBooking,
+      ])
 
       await expect(
         bookingService.update(
@@ -487,7 +492,7 @@ describe('BookingService', () => {
           renterId,
         ),
       ).rejects.toThrow(CarNotAvailableError)
-      
+
       expect(mockBookingRepository.update).not.toHaveBeenCalled()
     })
   })

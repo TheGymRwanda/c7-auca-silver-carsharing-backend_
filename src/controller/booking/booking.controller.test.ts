@@ -1,4 +1,8 @@
-import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+} from '@nestjs/common'
 
 import {
   type BookingID,
@@ -300,14 +304,18 @@ describe('BookingController', () => {
       expect(result.state).toBe(BookingState.CONFIRMED)
       expect(bookingServiceMock.update).toHaveBeenCalledWith(
         bookingId,
-        { state: BookingState.CONFIRMED, startDate: undefined, endDate: undefined },
+        {
+          state: BookingState.CONFIRMED,
+          startDate: undefined,
+          endDate: undefined,
+        },
         user.id,
       )
     })
 
     it('should update booking dates and return DTO', async () => {
-      const newStartDate = '2026-03-01T10:00:00Z'
-      const newEndDate = '2026-03-05T10:00:00Z'
+      const newStartDate = '2026-03-01T10:00:00.000Z'
+      const newEndDate = '2026-03-05T10:00:00.000Z'
       const updatedBooking = new BookingBuilder()
         .withId(bookingId)
         .withCarId(10 as CarID)
@@ -343,7 +351,9 @@ describe('BookingController', () => {
       )
 
       await expect(
-        bookingController.patch(user, bookingId, { state: BookingState.CONFIRMED }),
+        bookingController.patch(user, bookingId, {
+          state: BookingState.CONFIRMED,
+        }),
       ).rejects.toThrow(ForbiddenException)
     })
 
