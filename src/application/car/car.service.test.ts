@@ -1,5 +1,4 @@
-import { ForbiddenException } from '@nestjs/common'
-
+import { CarAccessDeniedError } from './error'
 import {
   type CarRepositoryMock,
   type DatabaseConnectionMock,
@@ -43,18 +42,17 @@ describe('CarService', () => {
       expect(carRepositoryMock.update).toHaveBeenCalled()
     })
 
-    it('should throw ForbiddenException when user is not the owner', async () => {
-      const owner = new UserBuilder().build()
-      const otherUser = new UserBuilder().build()
+    it('should throw CarAccessDeniedError when user is not the owner', async () => {
+      const owner = new UserBuilder().withId(1).build()
+      const otherUser = new UserBuilder().withId(2).build()
       const car = new CarBuilder().withOwner(owner).build()
 
       carRepositoryMock.get.mockResolvedValue(car)
+      // Don't mock update - it shouldn't be called
 
       await expect(
         carService.update(car.id, { name: 'New Name' }, otherUser.id),
-      ).rejects.toThrow(
-        new ForbiddenException('You can only update cars that you own'),
-      )
+      ).rejects.toThrow(CarAccessDeniedError)
 
       expect(carRepositoryMock.update).not.toHaveBeenCalled()
     })
