@@ -67,7 +67,7 @@ export class BookingController {
       throw new BadRequestException(error.message)
     }
     if (error instanceof CarNotAvailableError) {
-      throw new ConflictException(
+      throw new BadRequestException(
         'The car is not available in the requested time slot',
       )
     }
@@ -127,13 +127,10 @@ export class BookingController {
   })
   @ApiBadRequestResponse({
     description:
-      'The request was malformed, e.g. missing or invalid parameter or property in the request body.',
+      'The request was malformed, e.g. missing or invalid parameter or property in the request body, or the car is not available in the requested time slot.',
   })
   @ApiNotFoundResponse({
     description: 'No car with the given id was found.',
-  })
-  @ApiConflictResponse({
-    description: 'The car is not available in the requested time slot.',
   })
   @Post()
   public async create(
@@ -164,7 +161,7 @@ export class BookingController {
   })
   @ApiBadRequestResponse({
     description:
-      'The request was malformed, e.g. missing or invalid parameter or property in the request body.',
+      'The request was malformed, e.g. missing or invalid parameter or property in the request body, or the car is not available in the requested time slot.',
   })
   @ApiNotFoundResponse({
     description: 'No booking with the given id was found.',
@@ -172,9 +169,6 @@ export class BookingController {
   @ApiUnauthorizedResponse({
     description:
       'Access denied. You can only update bookings where you are the renter or car owner.',
-  })
-  @ApiConflictResponse({
-    description: 'The car is not available in the requested time slot.',
   })
   @Patch(':id')
   public async patch(
