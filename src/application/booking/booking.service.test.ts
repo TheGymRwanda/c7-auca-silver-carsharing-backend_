@@ -353,4 +353,142 @@ describe('BookingService', () => {
       )
     })
   })
+
+  describe('update', () => {
+    const bookingId = 123 as any
+    const renterId = 42 as UserID
+    const ownerId = 99 as UserID
+    const carId = 10 as CarID
+    
+    const existingBooking = new BookingBuilder()
+      .withId(bookingId)
+      .withCarId(carId)
+      .withRenterId(renterId)
+      .withState(BookingState.PENDING)
+      .withStartDate(new Date('2026-02-01T10:00:00Z'))
+      .withEndDate(new Date('2026-02-05T10:00:00Z'))
+      .build()
+
+    beforeEach(() => {
+      mockBookingRepository.get.mockResolvedValue(existingBooking)
+      mockCarRepository.get.mockResolvedValue({ ownerId } as any)
+    })
+
+    it('should update booking state when user is renter', async () => {
+      const updatedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withState(BookingState.PICKED_UP)
+        .build()
+      
+      mockBookingRepository.update.mockResolvedValue(updatedBooking)
+
+      const result = await bookingService.update(
+        bookingId,
+        { state: BookingState.PICKED_UP },
+        renterId,
+      )
+
+      expect(result).toBe(updatedBooking)
+      expect(mockBookingRepository.update).toHaveBeenCalledWith(
+        mockTransaction,
+        expect.objectContaining({ state: BookingState.PICKED_UP }),
+      )
+    })
+
+    it('should update booking state when user is car owner', async () => {
+      const updatedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withState(BookingState.CONFIRMED)
+        .build()
+      
+      mockBookingRepository.update.mockResolvedValue(updatedBooking)
+
+      const result = await bookingService.update(
+        bookingId,
+        { state: BookingState.CONFIRMED },
+        ownerId,
+      )
+
+      expect(result).toBe(updatedBooking)
+      expect(mockBookingRepository.update).toHaveBeenCalledWith(
+        mockTransaction,
+        expect.objectContaining({ state: BookingState.CONFIRMED }),
+      )
+    })
+
+    it('should throw BookingAccessDeniedError when user is neither renter nor owner', async () => {
+      const unauthorizedUserId = 777 as UserID
+
+      await expect(
+        bookingService.update(
+          bookingId,
+          { state: BookingState.CONFIRMED },
+          unauthorizedUserId,
+        ),
+      ).rejects.toThrow(BookingAccessDeniedError)
+      
+      expect(mockBookingRepository.update).not.toHaveBeenCalled()
+    })
+
+    it('should validate and update dates when provided', async () => {
+      const newStartDate = new Date('2026-03-01T10:00:00Z')
+      const newEndDate = new Date('2026-03-05T10:00:00Z')
+      const updatedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withStartDate(newStartDate)
+        .withEndDate(newEndDate)
+        .build()
+      
+      mockBookingRepository.findOverlappingBookings.mockResolvedValue([])
+      mockBookingRepository.update.mockResolvedValue(updatedBooking)
+
+      const result = await bookingService.update(
+        bookingId,
+        { startDate: newStartDate, endDate: newEndDate },
+        renterId,
+      )
+
+      expect(result).toBe(updatedBooking)
+      expect(mockBookingRepository.findOverlappingBookings).toHaveBeenCalledWith(
+        mockTransaction,
+        carId,
+        newStartDate,
+        newEndDate,
+        bookingId,
+      )
+    })
+
+    it('should throw InvalidBookingDatesError when dates are invalid', async () => {
+      const invalidStartDate = new Date('2026-03-05T10:00:00Z')
+      const invalidEndDate = new Date('2026-03-01T10:00:00Z')
+
+      await expect(
+        bookingService.update(
+          bookingId,
+          { startDate: invalidStartDate, endDate: invalidEndDate },
+          renterId,
+        ),
+      ).rejects.toThrow(InvalidBookingDatesError)
+      
+      expect(mockBookingRepository.update).not.toHaveBeenCalled()
+    })
+
+    it('should throw CarNotAvailableError when car is not available for new dates', async () => {
+      const newStartDate = new Date('2026-03-01T10:00:00Z')
+      const newEndDate = new Date('2026-03-05T10:00:00Z')
+      const overlappingBooking = new BookingBuilder().withId(456 as any).build()
+      
+      mockBookingRepository.findOverlappingBookings.mockResolvedValue([overlappingBooking])
+
+      await expect(
+        bookingService.update(
+          bookingId,
+          { startDate: newStartDate, endDate: newEndDate },
+          renterId,
+        ),
+      ).rejects.toThrow(CarNotAvailableError)
+      
+      expect(mockBookingRepository.update).not.toHaveBeenCalled()
+    })
+  })
 })

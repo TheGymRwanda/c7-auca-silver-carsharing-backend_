@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common'
+import { BadRequestException, ConflictException, ForbiddenException } from '@nestjs/common'
 
 import {
   type BookingID,
@@ -25,6 +25,7 @@ describe('BookingController', () => {
       create: jest.fn(),
       get: jest.fn(),
       getAll: jest.fn(),
+      update: jest.fn(),
     }
     bookingController = new BookingController(bookingServiceMock)
   })
@@ -272,6 +273,107 @@ describe('BookingController', () => {
           endDate: new Date('2026-02-05T10:00:00Z'),
         }),
       )
+    })
+  })
+
+  describe('patch', () => {
+    const user = new UserBuilder().withId(42).build()
+    const bookingId = 1 as BookingID
+
+    it('should update booking state and return DTO', async () => {
+      const updatedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withCarId(10 as CarID)
+        .withRenterId(user.id)
+        .withState(BookingState.CONFIRMED)
+        .withStartDate(new Date('2026-02-01T10:00:00Z'))
+        .withEndDate(new Date('2026-02-05T10:00:00Z'))
+        .build()
+
+      bookingServiceMock.update.mockResolvedValue(updatedBooking)
+
+      const result = await bookingController.patch(user, bookingId, {
+        state: BookingState.CONFIRMED,
+      })
+
+      expect(result).toBeInstanceOf(BookingDTO)
+      expect(result.state).toBe(BookingState.CONFIRMED)
+      expect(bookingServiceMock.update).toHaveBeenCalledWith(
+        bookingId,
+        { state: BookingState.CONFIRMED, startDate: undefined, endDate: undefined },
+        user.id,
+      )
+    })
+
+    it('should update booking dates and return DTO', async () => {
+      const newStartDate = '2026-03-01T10:00:00Z'
+      const newEndDate = '2026-03-05T10:00:00Z'
+      const updatedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withCarId(10 as CarID)
+        .withRenterId(user.id)
+        .withState(BookingState.PENDING)
+        .withStartDate(new Date(newStartDate))
+        .withEndDate(new Date(newEndDate))
+        .build()
+
+      bookingServiceMock.update.mockResolvedValue(updatedBooking)
+
+      const result = await bookingController.patch(user, bookingId, {
+        startDate: newStartDate,
+        endDate: newEndDate,
+      })
+
+      expect(result.startDate).toBe(newStartDate)
+      expect(result.endDate).toBe(newEndDate)
+      expect(bookingServiceMock.update).toHaveBeenCalledWith(
+        bookingId,
+        {
+          state: undefined,
+          startDate: new Date(newStartDate),
+          endDate: new Date(newEndDate),
+        },
+        user.id,
+      )
+    })
+
+    it('should throw ForbiddenException when access is denied', async () => {
+      bookingServiceMock.update.mockRejectedValue(
+        new BookingAccessDeniedError(bookingId),
+      )
+
+      await expect(
+        bookingController.patch(user, bookingId, { state: BookingState.CONFIRMED }),
+      ).rejects.toThrow(ForbiddenException)
+    })
+
+    it('should throw ConflictException when car is not available', async () => {
+      bookingServiceMock.update.mockRejectedValue(
+        new CarNotAvailableError(10 as CarID, new Date(), new Date()),
+      )
+
+      await expect(
+        bookingController.patch(user, bookingId, {
+          startDate: '2026-03-01T10:00:00Z',
+        }),
+      ).rejects.toThrow(ConflictException)
+    })
+
+    it('should throw BadRequestException when dates are invalid', async () => {
+      bookingServiceMock.update.mockRejectedValue(
+        new InvalidBookingDatesError(
+          new Date('2026-03-05T10:00:00Z'),
+          new Date('2026-03-01T10:00:00Z'),
+          'End date must be after start date',
+        ),
+      )
+
+      await expect(
+        bookingController.patch(user, bookingId, {
+          startDate: '2026-03-05T10:00:00Z',
+          endDate: '2026-03-01T10:00:00Z',
+        }),
+      ).rejects.toThrow(BadRequestException)
     })
   })
 })
