@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common'
 
-import {
-  IBookingRepository,
-  ICarRepository,
-  ICarTypeRepository,
-  IUserRepository,
-} from '../application'
+import { IBookingRepository } from '../application/booking/booking.repository.interface'
+import { ICarRepository } from '../application/car/car.repository.interface'
+import { ICarTypeRepository } from '../application/car-type/car-type.repository.interface'
+import { IUserRepository } from '../application/user/user.repository.interface'
 import {
   BookingRepository,
   CarRepository,
