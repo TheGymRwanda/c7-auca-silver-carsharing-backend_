@@ -28,10 +28,10 @@ describe('CarTypeRepository', () => {
   describe('get', () => {
     it('should return a car type', async () => {
       const actual = await execute(tx =>
-        carTypeRepository.get(tx, carTypes.fiat.id),
+        carTypeRepository.get(tx, carTypes.car550.id),
       )
 
-      expect(actual).toEqual(carTypes.fiat)
+      expect(actual).toEqual(carTypes.car550)
     })
 
     it('should throw if a car type does not exist', async () => {
@@ -43,7 +43,7 @@ describe('CarTypeRepository', () => {
 
   describe('update', () => {
     it('should update a car type', async () => {
-      const updated = { ...carTypes.fiat, name: 'Car 550 (updated)' }
+      const updated = { ...carTypes.car550, name: 'Car 550 (updated)' }
       const actual = await execute(tx => carTypeRepository.update(tx, updated))
 
       expect(actual).toEqual(updated)
