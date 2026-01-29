@@ -4,6 +4,8 @@ import { type Except } from 'type-fest'
 import { IDatabaseConnection } from '../../persistence/database-connection.interface'
 import { type Transaction } from '../../persistence/database-connection.interface'
 import { type UserID } from '../user'
+import { IBookingRepository } from '../booking/booking.repository.interface'
+import { BookingState } from '../booking/booking-state'
 
 import { Car, type CarID, type CarProperties } from './car'
 import { ICarRepository } from './car.repository.interface'
@@ -13,20 +15,37 @@ import { CarAccessDeniedError, DuplicateLicensePlateError } from './error'
 @Injectable()
 export class CarService implements ICarService {
   private readonly carRepository: ICarRepository
+  private readonly bookingRepository: IBookingRepository
   private readonly databaseConnection: IDatabaseConnection
   private readonly logger: Logger
 
   public constructor(
     carRepository: ICarRepository,
+    bookingRepository: IBookingRepository,
     databaseConnection: IDatabaseConnection,
   ) {
     this.carRepository = carRepository
+    this.bookingRepository = bookingRepository
     this.databaseConnection = databaseConnection
     this.logger = new Logger(CarService.name)
   }
 
   // Please remove the next line when implementing this file.
   /* eslint-disable @typescript-eslint/require-await */
+
+  private async isActiveRenter(
+    tx: Transaction,
+    carId: CarID,
+    userId: UserID,
+  ): Promise<boolean> {
+    const bookings = await this.bookingRepository.getAll(tx)
+    return bookings.some(
+      booking =>
+        booking.carId === carId &&
+        booking.renterId === userId &&
+        booking.state === BookingState.PICKED_UP,
+    )
+  }
 
   private async validateLicensePlateUniqueness(
     tx: Transaction,
@@ -71,8 +90,15 @@ export class CarService implements ICarService {
   ): Promise<Car> {
     return this.databaseConnection.transactional(async tx => {
       const car = await this.carRepository.get(tx, carId)
+      const isOwner = car.ownerId === currentUserId
+      const isActiveRenter = await this.isActiveRenter(tx, carId, currentUserId)
 
-      if (car.ownerId !== currentUserId) {
+      if (!isOwner && !isActiveRenter) {
+        throw new CarAccessDeniedError(carId)
+      }
+
+      // Renters can only change state
+      if (!isOwner && Object.keys(updates).some(key => key !== 'state')) {
         throw new CarAccessDeniedError(carId)
       }
 
