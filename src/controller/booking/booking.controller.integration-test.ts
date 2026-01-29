@@ -8,13 +8,12 @@ import {
 import request from 'supertest'
 
 import { MainModule } from '../../main.module'
-import { type CarID } from '../../application/car'
-import { type UserID } from '../../application/user'
-import { BookingState } from '../../application/booking'
 import {
   IDatabaseConnection,
   type Transaction,
 } from '../../persistence/database-connection.interface'
+import { BookingState } from '../../application/booking'
+import { type UserID } from '../../application/user'
 
 describe('BookingController (Integration)', () => {
   let app: INestApplication
@@ -54,7 +53,7 @@ describe('BookingController (Integration)', () => {
 
     // Restore original environment (optional, for cleanup)
     Object.assign(process.env, originalEnv)
-  }, 60000)
+  }, 60_000)
 
   afterAll(async () => {
     if (app) {
@@ -144,12 +143,12 @@ describe('BookingController (Integration)', () => {
     })
   }
 
-  function generateJwtToken(userId: UserID): string {
-    return jwtService.sign({ sub: userId, username: 'testuser' })
+  function getFutureDate(hoursFromNow: number): string {
+    return new Date(Date.now() + hoursFromNow * 60 * 60 * 1_000).toISOString()
   }
 
-  function getFutureDate(hoursFromNow: number): string {
-    return new Date(Date.now() + hoursFromNow * 60 * 60 * 1000).toISOString()
+  function generateJwtToken(userId: UserID): string {
+    return jwtService.sign({ sub: userId, username: 'testuser' })
   }
 
   describe('POST /bookings', () => {
@@ -188,17 +187,17 @@ describe('BookingController (Integration)', () => {
           .send(validBookingData)
           .expect(201)
 
-        const booking = await databaseConnection.transactional(
-          async (tx: Transaction) => {
-            return tx.oneOrNone('SELECT * FROM bookings WHERE car_id = $1', [
-              validBookingData.carId,
-            ])
-          },
-        )
+        const booking: { state: string; renter_id: number } | null =
+          await databaseConnection.transactional(async (tx: Transaction) => {
+            return tx.oneOrNone<{ state: string; renter_id: number }>(
+              'SELECT * FROM bookings WHERE car_id = $1',
+              [validBookingData.carId],
+            )
+          })
 
         expect(booking).toBeTruthy()
-        expect(booking.state).toBe(BookingState.PENDING)
-        expect(booking.renter_id).toBe(1)
+        expect(booking?.state).toBe(BookingState.PENDING)
+        expect(booking?.renter_id).toBe(1)
       })
     })
 
@@ -308,7 +307,7 @@ describe('BookingController (Integration)', () => {
         const token = generateJwtToken(1 as UserID)
         const invalidData = {
           carId: 1,
-          startDate: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+          startDate: new Date(Date.now() - 60 * 60 * 1_000).toISOString(),
           endDate: getFutureDate(24),
         }
 
@@ -441,7 +440,7 @@ describe('BookingController (Integration)', () => {
 
     beforeEach(async () => {
       await databaseConnection.transactional(async (tx: Transaction) => {
-        const result = await tx.one(
+        const result: { id: number } = await tx.one(
           `INSERT INTO bookings (car_id, renter_id, state, start_date, end_date) 
            VALUES ($1, $2, $3, $4, $5) 
            RETURNING id`,

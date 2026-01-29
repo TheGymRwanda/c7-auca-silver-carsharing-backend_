@@ -1,4 +1,3 @@
-import { CarAccessDeniedError } from './error'
 import {
   type CarRepositoryMock,
   type BookingRepositoryMock,
@@ -7,13 +6,14 @@ import {
   mockBookingRepository,
   mockDatabaseConnection,
 } from '../../mocks'
-import { UserBuilder } from '../user/user.builder'
-import { BookingBuilder } from '../booking/booking.builder'
 import { BookingState } from '../booking'
+import { BookingBuilder } from '../booking/booking.builder'
+import { UserBuilder } from '../user/user.builder'
 
 import { CarBuilder } from './car.builder'
-import { CarService } from './car.service'
 import { CarState } from './car-state'
+import { CarService } from './car.service'
+import { CarAccessDeniedError } from './error'
 
 describe('CarService', () => {
   let carService: CarService

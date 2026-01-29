@@ -11,7 +11,7 @@ export class BookingServiceMock implements IBookingService {
   private bookings: Booking[] = []
   private nextId = 1
 
-  public async create(data: Except<BookingProperties, 'id'>): Promise<Booking> {
+  public create(data: Except<BookingProperties, 'id'>): Promise<Booking> {
     const booking = new BookingBuilder()
       .withId(this.nextId++ as BookingID)
       .withCarId(data.carId)
@@ -22,10 +22,10 @@ export class BookingServiceMock implements IBookingService {
       .build()
 
     this.bookings.push(booking)
-    return booking
+    return Promise.resolve(booking)
   }
 
-  public async get(id: BookingID, userId: UserID): Promise<Booking> {
+  public get(id: BookingID, userId: UserID): Promise<Booking> {
     const booking = this.bookings.find(b => b.id === id)
     if (!booking) {
       throw new Error(`Booking with id ${id} not found`)
@@ -35,14 +35,14 @@ export class BookingServiceMock implements IBookingService {
       throw new BookingAccessDeniedError(id)
     }
 
-    return booking
+    return Promise.resolve(booking)
   }
 
-  public async getAll(): Promise<Booking[]> {
-    return [...this.bookings]
+  public getAll(): Promise<Booking[]> {
+    return Promise.resolve([...this.bookings])
   }
 
-  public async update(
+  public update(
     id: BookingID,
     updates: Partial<Except<BookingProperties, 'id' | 'carId' | 'renterId'>>,
     userId: UserID,
@@ -67,7 +67,7 @@ export class BookingServiceMock implements IBookingService {
 
     const index = this.bookings.findIndex(b => b.id === id)
     this.bookings[index] = updatedBooking
-    return updatedBooking
+    return Promise.resolve(updatedBooking)
   }
 
   public reset(): void {

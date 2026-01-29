@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { type Except } from 'type-fest'
 
-import { type CarID } from '../application'
-
-import { type Transaction } from './database-connection.interface'
 import {
   Booking,
   type BookingID,
@@ -12,7 +9,9 @@ import {
   type IBookingRepository,
   BookingNotFoundError,
 } from '../application/booking'
-import { type UserID } from '../application'
+import { type CarID, type UserID } from '../application'
+
+import { type Transaction } from './database-connection.interface'
 
 type Row = {
   id: number

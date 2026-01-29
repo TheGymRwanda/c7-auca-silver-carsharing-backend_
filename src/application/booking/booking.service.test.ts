@@ -1,24 +1,22 @@
 import { Logger } from '@nestjs/common'
 
-import { type CarID } from '../car'
-import { CarNotFoundError } from '../car'
-import { type UserID } from '../user'
-
-import { Booking } from './booking'
-import { BookingBuilder } from './booking.builder'
-import { BookingState } from './booking-state'
-import { BookingService } from './booking.service'
-import { BookingAccessDeniedError } from './booking-access-denied.error'
-import { CarNotAvailableError } from './car-not-available.error'
-import { InvalidBookingDatesError } from './invalid-booking-dates.error'
-import { InvalidBookingStateTransitionError } from './invalid-booking-state-transition.error'
-import { BookingStateTransitionValidator } from './booking-state-transition.validator'
-import { type IBookingRepository } from './booking.repository.interface'
-import { type ICarRepository } from '../car'
 import {
   type IDatabaseConnection,
   type Transaction,
 } from '../../persistence/database-connection.interface'
+import { BookingAccessDeniedError } from './booking-access-denied.error'
+import { BookingBuilder } from './booking.builder'
+import { type BookingID } from './booking'
+import { type IBookingRepository } from './booking.repository.interface'
+import { BookingService } from './booking.service'
+import { BookingState } from './booking-state'
+import { BookingStateTransitionValidator } from './booking-state-transition.validator'
+import { CarNotAvailableError } from './car-not-available.error'
+import { InvalidBookingDatesError } from './invalid-booking-dates.error'
+import { InvalidBookingStateTransitionError } from './invalid-booking-state-transition.error'
+import { type CarID, CarNotFoundError, type ICarRepository } from '../car'
+import { CarBuilder } from '../car/car.builder'
+import { type UserID } from '../user'
 
 describe('BookingService', () => {
   let bookingService: BookingService
@@ -47,9 +45,13 @@ describe('BookingService', () => {
     mockTransaction = {} as jest.Mocked<Transaction>
 
     mockDatabaseConnection = {
-      transactional: jest.fn().mockImplementation(async callback => {
-        return callback(mockTransaction)
-      }),
+      transactional: jest
+        .fn()
+        .mockImplementation(
+          async (callback: (tx: Transaction) => Promise<unknown>) => {
+            return callback(mockTransaction)
+          },
+        ),
     }
 
     bookingService = new BookingService(
@@ -65,8 +67,8 @@ describe('BookingService', () => {
     const validBookingData = {
       carId: 1 as CarID,
       renterId: 42 as UserID,
-      startDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      startDate: new Date(Date.now() + 24 * 60 * 60 * 1_000),
+      endDate: new Date(Date.now() + 48 * 60 * 60 * 1_000),
       state: BookingState.CONFIRMED,
     }
 
@@ -79,7 +81,7 @@ describe('BookingService', () => {
         .withState(BookingState.PENDING)
         .build()
 
-      mockCarRepository.get.mockResolvedValue({} as any)
+      mockCarRepository.get.mockResolvedValue(new CarBuilder().build())
       mockBookingRepository.findOverlappingBookings.mockResolvedValue([])
       mockBookingRepository.insert.mockResolvedValue(expectedBooking)
 
@@ -96,9 +98,11 @@ describe('BookingService', () => {
     })
 
     it('should override input state with PENDING', async () => {
-      mockCarRepository.get.mockResolvedValue({} as any)
+      mockCarRepository.get.mockResolvedValue(new CarBuilder().build())
       mockBookingRepository.findOverlappingBookings.mockResolvedValue([])
-      mockBookingRepository.insert.mockResolvedValue({} as any)
+      mockBookingRepository.insert.mockResolvedValue(
+        new BookingBuilder().build(),
+      )
 
       await bookingService.create({
         ...validBookingData,
@@ -140,11 +144,11 @@ describe('BookingService', () => {
     })
 
     it('should throw InvalidBookingDatesError when start date is in the past', async () => {
-      const pastDate = new Date(Date.now() - 1000)
+      const pastDate = new Date(Date.now() - 1_000)
       const invalidData = {
         ...validBookingData,
         startDate: pastDate,
-        endDate: new Date(Date.now() + 3600000),
+        endDate: new Date(Date.now() + 3_600_000),
       }
 
       await expect(bookingService.create(invalidData)).rejects.toThrow(
@@ -168,11 +172,11 @@ describe('BookingService', () => {
     it('should throw CarNotAvailableError when car has overlapping bookings', async () => {
       const overlappingBooking = new BookingBuilder()
         .withCarId(validBookingData.carId)
-        .withStartDate(new Date(Date.now() + 30 * 60 * 60 * 1000))
-        .withEndDate(new Date(Date.now() + 36 * 60 * 60 * 1000))
+        .withStartDate(new Date(Date.now() + 30 * 60 * 60 * 1_000))
+        .withEndDate(new Date(Date.now() + 36 * 60 * 60 * 1_000))
         .build()
 
-      mockCarRepository.get.mockResolvedValue({} as any)
+      mockCarRepository.get.mockResolvedValue(new CarBuilder().build())
       mockBookingRepository.findOverlappingBookings.mockResolvedValue([
         overlappingBooking,
       ])
@@ -184,9 +188,11 @@ describe('BookingService', () => {
     })
 
     it('should call findOverlappingBookings with correct parameters', async () => {
-      mockCarRepository.get.mockResolvedValue({} as any)
+      mockCarRepository.get.mockResolvedValue(new CarBuilder().build())
       mockBookingRepository.findOverlappingBookings.mockResolvedValue([])
-      mockBookingRepository.insert.mockResolvedValue({} as any)
+      mockBookingRepository.insert.mockResolvedValue(
+        new BookingBuilder().build(),
+      )
 
       await bookingService.create(validBookingData)
 
@@ -202,9 +208,11 @@ describe('BookingService', () => {
     })
 
     it('should use database transaction', async () => {
-      mockCarRepository.get.mockResolvedValue({} as any)
+      mockCarRepository.get.mockResolvedValue(new CarBuilder().build())
       mockBookingRepository.findOverlappingBookings.mockResolvedValue([])
-      mockBookingRepository.insert.mockResolvedValue({} as any)
+      mockBookingRepository.insert.mockResolvedValue(
+        new BookingBuilder().build(),
+      )
 
       await bookingService.create(validBookingData)
 
@@ -215,9 +223,11 @@ describe('BookingService', () => {
 
     it('should log booking creation start and success', async () => {
       const logSpy = jest.spyOn(Logger.prototype, 'log')
-      const expectedBooking = new BookingBuilder().withId(123 as any).build()
+      const expectedBooking = new BookingBuilder()
+        .withId(123 as BookingID)
+        .build()
 
-      mockCarRepository.get.mockResolvedValue({} as any)
+      mockCarRepository.get.mockResolvedValue(new CarBuilder().build())
       mockBookingRepository.findOverlappingBookings.mockResolvedValue([])
       mockBookingRepository.insert.mockResolvedValue(expectedBooking)
 
@@ -236,7 +246,7 @@ describe('BookingService', () => {
     it('should return booking when user is the renter', async () => {
       const renterId = 42 as UserID
       const carId = 10 as CarID
-      const bookingId = 123 as any
+      const bookingId = 123 as BookingID
       const expectedBooking = new BookingBuilder()
         .withId(bookingId)
         .withCarId(carId)
@@ -244,9 +254,9 @@ describe('BookingService', () => {
         .build()
 
       mockBookingRepository.get.mockResolvedValue(expectedBooking)
-      mockCarRepository.get.mockResolvedValue({
-        ownerId: 999 as UserID,
-      } as any)
+      mockCarRepository.get.mockResolvedValue(
+        new CarBuilder().withOwner(999).build(),
+      )
 
       const result = await bookingService.get(bookingId, renterId)
 
@@ -261,7 +271,7 @@ describe('BookingService', () => {
     it('should return booking when user is the car owner', async () => {
       const ownerId = 99 as UserID
       const carId = 10 as CarID
-      const bookingId = 123 as any
+      const bookingId = 123 as BookingID
       const expectedBooking = new BookingBuilder()
         .withId(bookingId)
         .withCarId(carId)
@@ -269,9 +279,9 @@ describe('BookingService', () => {
         .build()
 
       mockBookingRepository.get.mockResolvedValue(expectedBooking)
-      mockCarRepository.get.mockResolvedValue({
-        ownerId: ownerId,
-      } as any)
+      mockCarRepository.get.mockResolvedValue(
+        new CarBuilder().withOwner(ownerId).build(),
+      )
 
       const result = await bookingService.get(bookingId, ownerId)
 
@@ -286,7 +296,7 @@ describe('BookingService', () => {
     it('should throw BookingAccessDeniedError when user is neither renter nor owner', async () => {
       const unauthorizedUserId = 777 as UserID
       const carId = 10 as CarID
-      const bookingId = 123 as any
+      const bookingId = 123 as BookingID
       const expectedBooking = new BookingBuilder()
         .withId(bookingId)
         .withCarId(carId)
@@ -294,9 +304,9 @@ describe('BookingService', () => {
         .build()
 
       mockBookingRepository.get.mockResolvedValue(expectedBooking)
-      mockCarRepository.get.mockResolvedValue({
-        ownerId: 99 as UserID,
-      } as any)
+      mockCarRepository.get.mockResolvedValue(
+        new CarBuilder().withOwner(99).build(),
+      )
 
       await expect(
         bookingService.get(bookingId, unauthorizedUserId),
@@ -309,7 +319,7 @@ describe('BookingService', () => {
     })
 
     it('should use database transaction', async () => {
-      const bookingId = 123 as any
+      const bookingId = 123 as BookingID
       const userId = 42 as UserID
       const carId = 10 as CarID
       mockBookingRepository.get.mockResolvedValue(
@@ -319,9 +329,9 @@ describe('BookingService', () => {
           .withRenterId(userId)
           .build(),
       )
-      mockCarRepository.get.mockResolvedValue({
-        ownerId: 999 as UserID,
-      } as any)
+      mockCarRepository.get.mockResolvedValue(
+        new CarBuilder().withOwner(999).build(),
+      )
 
       await bookingService.get(bookingId, userId)
 
@@ -334,8 +344,8 @@ describe('BookingService', () => {
   describe('getAll', () => {
     it('should return all bookings from repository', async () => {
       const expectedBookings = [
-        new BookingBuilder().withId(1 as any).build(),
-        new BookingBuilder().withId(2 as any).build(),
+        new BookingBuilder().withId(1 as BookingID).build(),
+        new BookingBuilder().withId(2 as BookingID).build(),
       ]
 
       mockBookingRepository.getAll.mockResolvedValue(expectedBookings)
@@ -358,7 +368,7 @@ describe('BookingService', () => {
   })
 
   describe('update', () => {
-    const bookingId = 123 as any
+    const bookingId = 123 as BookingID
     const renterId = 42 as UserID
     const ownerId = 99 as UserID
     const carId = 10 as CarID
@@ -374,7 +384,9 @@ describe('BookingService', () => {
 
     beforeEach(() => {
       mockBookingRepository.get.mockResolvedValue(existingBooking)
-      mockCarRepository.get.mockResolvedValue({ ownerId } as any)
+      mockCarRepository.get.mockResolvedValue(
+        new CarBuilder().withOwner(ownerId).build(),
+      )
     })
 
     it('should update booking state when user is renter', async () => {
@@ -481,7 +493,9 @@ describe('BookingService', () => {
     it('should throw CarNotAvailableError when car is not available for new dates', async () => {
       const newStartDate = new Date('2026-03-01T10:00:00Z')
       const newEndDate = new Date('2026-03-05T10:00:00Z')
-      const overlappingBooking = new BookingBuilder().withId(456 as any).build()
+      const overlappingBooking = new BookingBuilder()
+        .withId(456 as BookingID)
+        .build()
 
       mockBookingRepository.findOverlappingBookings.mockResolvedValue([
         overlappingBooking,

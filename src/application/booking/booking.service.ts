@@ -3,6 +3,7 @@ import { type Except } from 'type-fest'
 
 import { IDatabaseConnection } from '../../persistence/database-connection.interface'
 import { type Transaction } from '../../persistence/database-connection.interface'
+import { type IBookingRepository, BookingState } from '../booking'
 import { type CarID, ICarRepository } from '../car'
 import { type UserID } from '../user'
 
@@ -10,8 +11,6 @@ import {
   Booking,
   type BookingID,
   type BookingProperties,
-  BookingState,
-  IBookingRepository,
   BookingAccessDeniedError,
   CarNotAvailableError,
   InvalidBookingDatesError,

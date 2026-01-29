@@ -55,7 +55,8 @@ export class BookingBuilder {
   }
 
   public buildCreateData(): Except<BookingProperties, 'id'> {
-    const { id, ...createData } = this.data
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, ...createData } = this.data
     return createData
   }
 }

@@ -1,9 +1,11 @@
 import { Opaque } from 'type-fest'
+import { IsEnum, IsInt, IsPositive } from 'class-validator'
+
+import { validate } from '../../util'
 import { CarID } from '../car'
 import { UserID } from '../user'
+
 import { BookingState } from './booking-state'
-import { IsDateString, IsEnum, IsInt, IsPositive } from 'class-validator'
-import { validate } from '../../util'
 
 export type BookingID = Opaque<number, 'booking-id'>
 
