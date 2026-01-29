@@ -4,7 +4,6 @@ import { JwtModule } from '@nestjs/jwt'
 import { AuthenticationConfig } from '../application'
 import {
   AuthenticationController,
-  BookingController,
   CarController,
   CarTypeController,
   UserController,
@@ -31,7 +30,6 @@ import { ServiceModule } from './service.module'
   ],
   controllers: [
     AuthenticationController,
-    BookingController,
     CarController,
     CarTypeController,
     UserController,

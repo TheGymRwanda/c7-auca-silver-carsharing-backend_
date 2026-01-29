@@ -1,4 +1,3 @@
-export * from './booking.repository'
 export * from './car.repository'
 export * from './car-type.repository'
 export * from './database-connection'
