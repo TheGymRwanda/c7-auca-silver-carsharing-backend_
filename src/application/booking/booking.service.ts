@@ -18,6 +18,7 @@ import {
   BookingStateTransitionValidator,
 } from './index'
 import { type IBookingService } from './booking.service.interface'
+import { UserBookingRole } from './user-booking-role'
 
 @Injectable()
 export class BookingService implements IBookingService {
@@ -150,7 +151,9 @@ export class BookingService implements IBookingService {
       }
 
       if (updates.state) {
-        const userRole = isOwner ? 'OWNER' : 'RENTER'
+        const userRole = isOwner
+          ? UserBookingRole.OWNER
+          : UserBookingRole.RENTER
         BookingStateTransitionValidator.validate(
           booking.state,
           updates.state,

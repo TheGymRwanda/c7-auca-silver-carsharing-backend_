@@ -55,7 +55,7 @@ export class BookingBuilder {
   }
 
   public buildCreateData(): Except<BookingProperties, 'id'> {
-    const { id, ...createData } = this.data
-    return createData
+    const { carId, renterId, state, startDate, endDate } = this.data
+    return { carId, renterId, state, startDate, endDate }
   }
 }
