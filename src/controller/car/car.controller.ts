@@ -62,7 +62,9 @@ export class CarController {
 
   private handleCarErrors(error: unknown): never {
     if (error instanceof CarAccessDeniedError) {
-      throw new ForbiddenException('You can only update cars that you own')
+      throw new ForbiddenException(
+        'You can only update cars that you own, or change the state of cars you are currently renting',
+      )
     }
     if (error instanceof DuplicateLicensePlateError) {
       throw new BadRequestException(
@@ -151,7 +153,8 @@ export class CarController {
     description: 'No car with the given id was found.',
   })
   @ApiForbiddenResponse({
-    description: 'You can only update cars that you own.',
+    description:
+      'You can only update cars that you own, or change the state of cars you are currently renting.',
   })
   @Patch(':id')
   public async patch(

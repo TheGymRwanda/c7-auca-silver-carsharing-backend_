@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
@@ -79,7 +78,7 @@ export class AuthenticationGuard implements CanActivate {
       return jwt.sub
     } catch (error: unknown) {
       const reason = (error as Error).message
-      throw new BadRequestException(`Invalid JWT: ${reason}`)
+      throw new UnauthorizedException(`Invalid JWT: ${reason}`)
     }
   }
 

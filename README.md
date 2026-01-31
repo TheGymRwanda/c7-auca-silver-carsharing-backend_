@@ -24,6 +24,12 @@ The simplest way to start the database is to use the script provided in the [`pa
 npm run db:start
 ```
 
+This will start only the PostgreSQL database container. If you want to start the entire application stack (database + backend), use:
+
+```bash
+npm start
+```
+
 If you see a message like "Error response form daemon: Conflict", that means the database container is already running so there's nothing to worry about.
 
 If instead you see a message containing "port is already allocated", that means that you already have a database running. Please stop that instance and try again. 
@@ -46,9 +52,17 @@ You are now good to go!
 
 # Starting the server
 
+For development with hot-reload:
 ```bash
 npm run start:dev
 ```
+
+Or to start the entire application stack using Docker:
+```bash
+npm start
+```
+
+The application will be available at http://localhost:3000
 
 # Running the tests
 
