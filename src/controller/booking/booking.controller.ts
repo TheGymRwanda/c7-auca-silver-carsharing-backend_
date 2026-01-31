@@ -85,9 +85,9 @@ export class BookingController {
     if (error instanceof CarNotFoundError) {
       throw new NotFoundException(error.message)
     }
-      if (error instanceof BookingNotFoundError) {
-        throw new NotFoundException(error.message)
-      }
+    if (error instanceof BookingNotFoundError) {
+      throw new NotFoundException(error.message)
+    }
     throw error
   }
 
@@ -170,7 +170,9 @@ export class BookingController {
       const end = new Date(data.endDate)
 
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        throw new BadRequestException('startDate or endDate is not a valid date')
+        throw new BadRequestException(
+          'startDate or endDate is not a valid date',
+        )
       }
 
       if (start >= end) {
@@ -234,7 +236,11 @@ export class BookingController {
         updates.endDate = end
       }
 
-      if (updates.startDate && updates.endDate && updates.startDate >= updates.endDate) {
+      if (
+        updates.startDate &&
+        updates.endDate &&
+        updates.startDate >= updates.endDate
+      ) {
         throw new BadRequestException('endDate must be after startDate')
       }
 
