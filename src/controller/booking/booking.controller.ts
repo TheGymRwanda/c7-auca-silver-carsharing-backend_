@@ -9,12 +9,12 @@ import {
   UseGuards,
   BadRequestException,
   ConflictException,
-  UnauthorizedException,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common'
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
-  ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
@@ -35,6 +35,7 @@ import {
   InvalidBookingDatesError,
   BookingAccessDeniedError,
   InvalidBookingStateTransitionError,
+  CarNotFoundError,
 } from '../../application'
 import { AuthenticationGuard } from '../authentication.guard'
 import { CurrentUser } from '../current-user.decorator'
@@ -68,7 +69,7 @@ export class BookingController {
       throw new BadRequestException(error.message)
     }
     if (error instanceof CarNotAvailableError) {
-      throw new BadRequestException(
+      throw new ConflictException(
         'The car is not available in the requested time slot',
       )
     }
@@ -76,9 +77,12 @@ export class BookingController {
       throw new BadRequestException(error.message)
     }
     if (error instanceof BookingAccessDeniedError) {
-      throw new UnauthorizedException(
+      throw new ForbiddenException(
         'Access denied. You can only update bookings where you are the renter or car owner.',
       )
+    }
+    if (error instanceof CarNotFoundError) {
+      throw new NotFoundException(error.message)
     }
     throw error
   }
@@ -118,8 +122,12 @@ export class BookingController {
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: BookingID,
   ): Promise<BookingDTO> {
-    const booking = await this.bookingService.get(id, user.id)
-    return BookingDTO.fromModel(booking)
+    try {
+      const booking = await this.bookingService.get(id, user.id)
+      return BookingDTO.fromModel(booking)
+    } catch (error) {
+      this.handleBookingErrors(error)
+    }
   }
 
   @ApiOperation({
