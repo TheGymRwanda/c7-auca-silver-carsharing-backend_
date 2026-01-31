@@ -127,7 +127,7 @@ describe('AuthenticationGuard', () => {
 
       await expect(
         authenticationGuard.canActivate(executionContextMock),
-      ).rejects.toThrow(BadRequestException)
+      ).rejects.toThrow(UnauthorizedException)
     })
 
     describe('should throw an UnauthorizedException', () => {
