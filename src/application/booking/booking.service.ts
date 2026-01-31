@@ -6,6 +6,9 @@ import { type Transaction } from '../../persistence/database-connection.interfac
 import { type CarID, ICarRepository } from '../car'
 import { type UserID } from '../user'
 
+import { type IBookingService } from './booking.service.interface'
+import { UserBookingRole } from './user-booking-role'
+
 import {
   Booking,
   type BookingID,
@@ -17,8 +20,6 @@ import {
   InvalidBookingDatesError,
   BookingStateTransitionValidator,
 } from './index'
-import { type IBookingService } from './booking.service.interface'
-import { UserBookingRole } from './user-booking-role'
 
 @Injectable()
 export class BookingService implements IBookingService {
