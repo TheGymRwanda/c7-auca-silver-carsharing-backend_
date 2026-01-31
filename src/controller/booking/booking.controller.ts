@@ -36,6 +36,7 @@ import {
   BookingAccessDeniedError,
   InvalidBookingStateTransitionError,
   CarNotFoundError,
+  BookingNotFoundError,
 } from '../../application'
 import { AuthenticationGuard } from '../authentication.guard'
 import { CurrentUser } from '../current-user.decorator'
@@ -82,6 +83,9 @@ export class BookingController {
       )
     }
     if (error instanceof CarNotFoundError) {
+      throw new NotFoundException(error.message)
+    }
+    if (error instanceof BookingNotFoundError) {
       throw new NotFoundException(error.message)
     }
     throw error
@@ -150,11 +154,36 @@ export class BookingController {
     @Body() data: CreateBookingDTO,
   ): Promise<BookingDTO> {
     try {
+      if (data.carId === undefined || data.carId === null) {
+        throw new BadRequestException('carId is required')
+      }
+
+      if (!data.startDate) {
+        throw new BadRequestException('startDate is required')
+      }
+
+      if (!data.endDate) {
+        throw new BadRequestException('endDate is required')
+      }
+
+      const start = new Date(data.startDate)
+      const end = new Date(data.endDate)
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        throw new BadRequestException(
+          'startDate or endDate is not a valid date',
+        )
+      }
+
+      if (start >= end) {
+        throw new BadRequestException('endDate must be after startDate')
+      }
+
       const booking = await this.bookingService.create({
         carId: data.carId,
         renterId: user.id,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
+        startDate: start,
+        endDate: end,
         state: BookingState.PENDING,
       })
 
@@ -189,15 +218,33 @@ export class BookingController {
     @Body() data: PatchBookingDTO,
   ): Promise<BookingDTO> {
     try {
-      const booking = await this.bookingService.update(
-        id,
-        {
-          state: data.state,
-          startDate: data.startDate ? new Date(data.startDate) : undefined,
-          endDate: data.endDate ? new Date(data.endDate) : undefined,
-        },
-        user.id,
-      )
+      const updates: any = { state: data.state }
+
+      if (data.startDate) {
+        const start = new Date(data.startDate)
+        if (isNaN(start.getTime())) {
+          throw new BadRequestException('startDate is not a valid date')
+        }
+        updates.startDate = start
+      }
+
+      if (data.endDate) {
+        const end = new Date(data.endDate)
+        if (isNaN(end.getTime())) {
+          throw new BadRequestException('endDate is not a valid date')
+        }
+        updates.endDate = end
+      }
+
+      if (
+        updates.startDate &&
+        updates.endDate &&
+        updates.startDate >= updates.endDate
+      ) {
+        throw new BadRequestException('endDate must be after startDate')
+      }
+
+      const booking = await this.bookingService.update(id, updates, user.id)
 
       return BookingDTO.fromModel(booking)
     } catch (error) {
