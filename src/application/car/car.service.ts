@@ -3,9 +3,9 @@ import { type Except } from 'type-fest'
 
 import { IDatabaseConnection } from '../../persistence/database-connection.interface'
 import { type Transaction } from '../../persistence/database-connection.interface'
-import { type UserID } from '../user'
-import { IBookingRepository } from '../booking/booking.repository.interface'
 import { BookingState } from '../booking/booking-state'
+import { IBookingRepository } from '../booking/booking.repository.interface'
+import { type UserID } from '../user'
 
 import { Car, type CarID, type CarProperties } from './car'
 import { ICarRepository } from './car.repository.interface'

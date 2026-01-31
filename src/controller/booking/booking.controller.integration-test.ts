@@ -7,10 +7,10 @@ import {
 } from '@testcontainers/postgresql'
 import request from 'supertest'
 
-import { MainModule } from '../../main.module'
+import { BookingState } from '../../application/booking'
 import { type CarID } from '../../application/car'
 import { type UserID } from '../../application/user'
-import { BookingState } from '../../application/booking'
+import { MainModule } from '../../main.module'
 import {
   IDatabaseConnection,
   type Transaction,
@@ -54,7 +54,7 @@ describe('BookingController (Integration)', () => {
 
     // Restore original environment (optional, for cleanup)
     Object.assign(process.env, originalEnv)
-  }, 60000)
+  }, 60_000)
 
   afterAll(async () => {
     if (app) {
@@ -118,8 +118,8 @@ describe('BookingController (Integration)', () => {
     await databaseConnection.transactional(async (tx: Transaction) => {
       await tx.none(`
         INSERT INTO users (id, name, password) VALUES 
-        (1, 'testuser', 'hashedpassword'),
-        (2, 'otheruser', 'hashedpassword')
+        (1, 'testuser', 'f38f5587a7dfb8c8f853b32f7235307c867cdd19109778a051891be5d8d4892cf2aa9a128d63409572f1d181d5aa77c0977ece42717aef7aa0506f61ed94fd7d'),
+        (2, 'otheruser', '19f58557744d2a919c47266f092e21dbe5fbfd7c930599033562420cb471abf4454442f4e097304523d462e7770a3fe2a0ac04e1e11a13a32932f1c0db886ffd')
         ON CONFLICT (id) DO NOTHING
       `)
 
@@ -131,8 +131,8 @@ describe('BookingController (Integration)', () => {
 
       await tx.none(`
         INSERT INTO cars (id, car_type_id, owner_id, state, name, fuel_type, horsepower) VALUES 
-        (1, 1, 2, 'AVAILABLE', 'Test Car', 'GASOLINE', 150),
-        (2, 1, 2, 'AVAILABLE', 'Another Car', 'ELECTRIC', 200)
+        (1, 1, 2, 'LOCKED', 'Test Car', 'petrol', 150),
+        (2, 1, 2, 'LOCKED', 'Another Car', 'electric', 200)
         ON CONFLICT (id) DO NOTHING
       `)
     })
@@ -488,7 +488,11 @@ describe('BookingController (Integration)', () => {
         await databaseConnection.transactional(async (tx: Transaction) => {
           await tx.none(
             'INSERT INTO users (id, name, password) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING',
-            [3, 'thirduser', 'hashedpassword'],
+            [
+              3,
+              'thirduser',
+              '3253659812d15922fe8c2d300fd7a7ce4466ddcdb6f24f52e83769d1ce32d43d124022e297693ff720c99fda96675f68843b054ac27f2efc7a6fc70096e256d4',
+            ],
           )
         })
 

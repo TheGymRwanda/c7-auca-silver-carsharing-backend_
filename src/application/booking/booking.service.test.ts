@@ -1,24 +1,23 @@
 import { Logger } from '@nestjs/common'
 
-import { type CarID } from '../car'
-import { CarNotFoundError } from '../car'
-import { type UserID } from '../user'
-
-import { Booking } from './booking'
-import { BookingBuilder } from './booking.builder'
-import { BookingState } from './booking-state'
-import { BookingService } from './booking.service'
-import { BookingAccessDeniedError } from './booking-access-denied.error'
-import { CarNotAvailableError } from './car-not-available.error'
-import { InvalidBookingDatesError } from './invalid-booking-dates.error'
-import { InvalidBookingStateTransitionError } from './invalid-booking-state-transition.error'
-import { BookingStateTransitionValidator } from './booking-state-transition.validator'
-import { type IBookingRepository } from './booking.repository.interface'
-import { type ICarRepository } from '../car'
 import {
   type IDatabaseConnection,
   type Transaction,
 } from '../../persistence/database-connection.interface'
+import { type CarID, type ICarRepository } from '../car'
+import { CarNotFoundError } from '../car'
+import { type UserID } from '../user'
+
+import { Booking } from './booking'
+import { BookingAccessDeniedError } from './booking-access-denied.error'
+import { BookingState } from './booking-state'
+import { BookingStateTransitionValidator } from './booking-state-transition.validator'
+import { BookingBuilder } from './booking.builder'
+import { type IBookingRepository } from './booking.repository.interface'
+import { BookingService } from './booking.service'
+import { CarNotAvailableError } from './car-not-available.error'
+import { InvalidBookingDatesError } from './invalid-booking-dates.error'
+import { InvalidBookingStateTransitionError } from './invalid-booking-state-transition.error'
 
 describe('BookingService', () => {
   let bookingService: BookingService
@@ -144,7 +143,7 @@ describe('BookingService', () => {
       const invalidData = {
         ...validBookingData,
         startDate: pastDate,
-        endDate: new Date(Date.now() + 3600000),
+        endDate: new Date(Date.now() + 3_600_000),
       }
 
       await expect(bookingService.create(invalidData)).rejects.toThrow(
@@ -378,6 +377,17 @@ describe('BookingService', () => {
     })
 
     it('should update booking state when user is renter', async () => {
+      const confirmedBooking = new BookingBuilder()
+        .withId(bookingId)
+        .withCarId(carId)
+        .withRenterId(renterId)
+        .withState(BookingState.CONFIRMED)
+        .withStartDate(new Date('2026-02-01T10:00:00Z'))
+        .withEndDate(new Date('2026-02-05T10:00:00Z'))
+        .build()
+
+      mockBookingRepository.get.mockResolvedValue(confirmedBooking)
+
       const updatedBooking = new BookingBuilder()
         .withId(bookingId)
         .withState(BookingState.PICKED_UP)
