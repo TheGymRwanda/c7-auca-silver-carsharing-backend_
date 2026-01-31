@@ -241,7 +241,7 @@ async function runMigrations(
       'tsconfig-paths/register',
       PG_MIGRATE,
       '--config-file',
-      'pgmigrate.config.json',
+      'node-pg-migrate.config.ts',
       'up',
     ],
     {
