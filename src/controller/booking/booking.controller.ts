@@ -41,8 +41,8 @@ import {
 import { AuthenticationGuard } from '../authentication.guard'
 import { CurrentUser } from '../current-user.decorator'
 
-import { BookingDTO, CreateBookingDTO, PatchBookingDTO } from './booking.dto'
 import { BookingValidationPipe } from './booking-validation.pipe'
+import { BookingDTO, CreateBookingDTO, PatchBookingDTO } from './booking.dto'
 
 @ApiTags(Booking.name)
 @ApiBearerAuth()
