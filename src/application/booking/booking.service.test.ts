@@ -9,15 +9,15 @@ import { CarNotFoundError } from '../car'
 import { type UserID } from '../user'
 
 import { Booking } from './booking'
-import { BookingAccessDeniedError } from './booking-access-denied.error'
+import { BookingAccessDeniedError } from './errors/booking-access-denied.error' 
 import { BookingState } from './booking-state'
 import { BookingStateTransitionValidator } from './booking-state-transition.validator'
 import { BookingBuilder } from './booking.builder'
 import { type IBookingRepository } from './booking.repository.interface'
 import { BookingService } from './booking.service'
-import { CarNotAvailableError } from './car-not-available.error'
-import { InvalidBookingDatesError } from './invalid-booking-dates.error'
-import { InvalidBookingStateTransitionError } from './invalid-booking-state-transition.error'
+import { CarNotAvailableError } from './errors/car-not-available.error' 
+import { InvalidBookingDatesError } from './errors/invalid-booking-dates.error' 
+import { InvalidBookingStateTransitionError } from './errors/invalid-booking-state-transition.error' 
 
 describe('BookingService', () => {
   let bookingService: BookingService
