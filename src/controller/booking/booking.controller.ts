@@ -152,11 +152,13 @@ export class BookingController {
   ): Promise<BookingDTO> {
     try {
       // Ensure compatibility for direct method calls (tests) by converting ISO strings
-const start = new Date(data.startDate as any)
+      const start = new Date(data.startDate as any)
       const end = new Date(data.endDate as any)
 
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        throw new BadRequestException('startDate or endDate is not a valid date')
+        throw new BadRequestException(
+          'startDate or endDate is not a valid date',
+        )
       }
 
       const booking = await this.bookingService.create({
@@ -195,7 +197,8 @@ const start = new Date(data.startDate as any)
   public async patch(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: BookingID,
-    @Body(new (BookingValidationPipe as any)({ isPatch: true })) data: PatchBookingDTO,
+    @Body(new (BookingValidationPipe as any)({ isPatch: true }))
+    data: PatchBookingDTO,
   ): Promise<BookingDTO> {
     try {
       const updates: any = { state: data.state }

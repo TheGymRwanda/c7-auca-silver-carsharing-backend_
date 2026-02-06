@@ -1,6 +1,6 @@
 import { type BookingID } from './booking'
 import { BookingState } from './booking-state'
-import { InvalidBookingStateTransitionError } from './errors/invalid-booking-state-transition.error' 
+import { InvalidBookingStateTransitionError } from './errors/invalid-booking-state-transition.error'
 
 type UserRole = 'OWNER' | 'RENTER'
 

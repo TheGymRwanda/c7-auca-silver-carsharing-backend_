@@ -3,9 +3,9 @@ import { type Except } from 'type-fest'
 import { type UserID } from '../user'
 
 import { type Booking, type BookingID, type BookingProperties } from './booking'
-import { BookingAccessDeniedError } from './errors/booking-access-denied.error' 
 import { BookingBuilder } from './booking.builder'
 import { type IBookingService } from './booking.service.interface'
+import { BookingAccessDeniedError } from './errors/booking-access-denied.error'
 
 export class BookingServiceMock implements IBookingService {
   private bookings: Booking[] = []

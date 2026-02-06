@@ -185,9 +185,7 @@ export class BookingService implements IBookingService {
 
       // Determine the user's role in this booking for state transition validation
       const isOwner = car.ownerId === userId
-      const userRole = isOwner
-        ? UserBookingRole.OWNER
-        : UserBookingRole.RENTER
+      const userRole = isOwner ? UserBookingRole.OWNER : UserBookingRole.RENTER
 
       if (updates.state) {
         BookingStateTransitionValidator.validate(

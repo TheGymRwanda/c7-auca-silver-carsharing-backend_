@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common'
+
 import { BookingState } from '../../application'
 
 interface Options {
@@ -12,7 +13,7 @@ export class BookingValidationPipe implements PipeTransform {
   public transform(value: any) {
     if (!value) return value
 
-    const body = value as any
+    const body = value
 
     if (!this.options.isPatch) {
       if (body.carId === undefined || body.carId === null) {
@@ -29,7 +30,10 @@ export class BookingValidationPipe implements PipeTransform {
     }
 
     if (body.startDate) {
-      const start = body.startDate instanceof Date ? body.startDate : new Date(body.startDate)
+      const start =
+        body.startDate instanceof Date
+          ? body.startDate
+          : new Date(body.startDate)
       if (isNaN(start.getTime())) {
         throw new BadRequestException('startDate is not a valid date')
       }
@@ -37,7 +41,8 @@ export class BookingValidationPipe implements PipeTransform {
     }
 
     if (body.endDate) {
-      const end = body.endDate instanceof Date ? body.endDate : new Date(body.endDate)
+      const end =
+        body.endDate instanceof Date ? body.endDate : new Date(body.endDate)
       if (isNaN(end.getTime())) {
         throw new BadRequestException('endDate is not a valid date')
       }

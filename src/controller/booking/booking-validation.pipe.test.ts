@@ -1,7 +1,8 @@
 import { BadRequestException } from '@nestjs/common'
 
-import { BookingValidationPipe } from './booking-validation.pipe'
 import { BookingState } from '../../application'
+
+import { BookingValidationPipe } from './booking-validation.pipe'
 
 describe('BookingValidationPipe', () => {
   describe('create (default)', () => {
@@ -14,7 +15,7 @@ describe('BookingValidationPipe', () => {
         endDate: '2026-03-05T10:00:00Z',
       }
 
-      const transformed = pipe.transform(payload) as any
+      const transformed = pipe.transform(payload)
 
       expect(transformed.carId).toBe(10)
       expect(transformed.startDate).toBeInstanceOf(Date)
@@ -67,7 +68,7 @@ describe('BookingValidationPipe', () => {
         startDate: '2026-04-01T10:00:00Z',
       }
 
-      const transformed = pipe.transform(payload) as any
+      const transformed = pipe.transform(payload)
 
       expect(transformed.startDate).toBeInstanceOf(Date)
       expect(transformed.endDate).toBeUndefined()

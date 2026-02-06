@@ -250,7 +250,9 @@ describe('BookingController', () => {
       ).rejects.toThrow(ConflictException)
       await expect(
         bookingController.create(user, createBookingDTO),
-      ).rejects.toThrow('Car 10 is not available from 2026-02-06T10:00:00.000Z to 2026-02-06T15:00:00.000Z')
+      ).rejects.toThrow(
+        'Car 10 is not available from 2026-02-06T10:00:00.000Z to 2026-02-06T15:00:00.000Z',
+      )
     })
 
     it('should rethrow unknown errors', async () => {
