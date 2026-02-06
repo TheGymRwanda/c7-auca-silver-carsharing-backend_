@@ -238,9 +238,11 @@ describe('BookingController', () => {
       ).rejects.toThrow(BadRequestException)
     })
 
-    it('should throw BadRequestException when car is not available', async () => {
+    it('should throw ConflictException when car is not available', async () => {
+      const startDate = new Date('2026-02-06T10:00:00Z')
+      const endDate = new Date('2026-02-06T15:00:00Z')
       bookingServiceMock.create.mockRejectedValue(
-        new CarNotAvailableError(10 as CarID, new Date(), new Date()),
+        new CarNotAvailableError(10 as CarID, startDate, endDate),
       )
 
       await expect(
@@ -248,7 +250,7 @@ describe('BookingController', () => {
       ).rejects.toThrow(ConflictException)
       await expect(
         bookingController.create(user, createBookingDTO),
-      ).rejects.toThrow('The car is not available in the requested time slot')
+      ).rejects.toThrow('Car 10 is not available from 2026-02-06T10:00:00.000Z to 2026-02-06T15:00:00.000Z')
     })
 
     it('should rethrow unknown errors', async () => {

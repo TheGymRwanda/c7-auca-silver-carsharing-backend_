@@ -71,24 +71,20 @@ export class BookingController {
       throw new BadRequestException(error.message)
     }
     if (error instanceof CarNotAvailableError) {
-      throw new ConflictException(
-        'The car is not available in the requested time slot',
-      )
+      throw new ConflictException(error.message)
     }
     if (error instanceof InvalidBookingStateTransitionError) {
       throw new BadRequestException(error.message)
     }
     if (error instanceof BookingAccessDeniedError) {
-      throw new ForbiddenException(
-        'Access denied. You can only update bookings where you are the renter or car owner.',
-      )
+      throw new ForbiddenException(error.message)
     }
     if (error instanceof CarNotFoundError) {
-      throw new NotFoundException('Car not found')
+      throw new NotFoundException(error.message)
     }
     if (error instanceof BookingNotFoundError) {
-      throw new NotFoundException('Booking not found')
-    } 
+      throw new NotFoundException(error.message)
+    }
     throw error
   }
 
