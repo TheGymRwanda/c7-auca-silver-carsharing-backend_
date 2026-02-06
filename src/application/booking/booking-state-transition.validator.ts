@@ -41,11 +41,13 @@ export class BookingStateTransitionValidator {
     bookingId: BookingID,
   ): void {
     if (currentState === newState) {
-      return // No transition needed
+      return
     }
 
     const transition = this.TRANSITIONS.find(
-      t => t.from === currentState && t.to === newState,
+      stateTransition =>
+        stateTransition.from === currentState &&
+        stateTransition.to === newState,
     )
 
     if (!transition || !transition.allowedRoles.includes(userRole)) {
