@@ -41,6 +41,7 @@ import {
 import { AuthenticationGuard } from '../authentication.guard'
 import { CurrentUser } from '../current-user.decorator'
 
+import { BookingValidationPipe } from './booking-validation.pipe'
 import { BookingDTO, CreateBookingDTO, PatchBookingDTO } from './booking.dto'
 
 @ApiTags(Booking.name)
@@ -70,17 +71,13 @@ export class BookingController {
       throw new BadRequestException(error.message)
     }
     if (error instanceof CarNotAvailableError) {
-      throw new ConflictException(
-        'The car is not available in the requested time slot',
-      )
+      throw new ConflictException(error.message)
     }
     if (error instanceof InvalidBookingStateTransitionError) {
       throw new BadRequestException(error.message)
     }
     if (error instanceof BookingAccessDeniedError) {
-      throw new ForbiddenException(
-        'Access denied. You can only update bookings where you are the renter or car owner.',
-      )
+      throw new ForbiddenException(error.message)
     }
     if (error instanceof CarNotFoundError) {
       throw new NotFoundException(error.message)
@@ -151,32 +148,17 @@ export class BookingController {
   @Post()
   public async create(
     @CurrentUser() user: User,
-    @Body() data: CreateBookingDTO,
+    @Body(new (BookingValidationPipe as any)()) data: CreateBookingDTO,
   ): Promise<BookingDTO> {
     try {
-      if (data.carId === undefined || data.carId === null) {
-        throw new BadRequestException('carId is required')
-      }
-
-      if (!data.startDate) {
-        throw new BadRequestException('startDate is required')
-      }
-
-      if (!data.endDate) {
-        throw new BadRequestException('endDate is required')
-      }
-
-      const start = new Date(data.startDate)
-      const end = new Date(data.endDate)
+      // Ensure compatibility for direct method calls (tests) by converting ISO strings
+      const start = new Date(data.startDate as any)
+      const end = new Date(data.endDate as any)
 
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         throw new BadRequestException(
           'startDate or endDate is not a valid date',
         )
-      }
-
-      if (start >= end) {
-        throw new BadRequestException('endDate must be after startDate')
       }
 
       const booking = await this.bookingService.create({
@@ -215,13 +197,14 @@ export class BookingController {
   public async patch(
     @CurrentUser() user: User,
     @Param('id', ParseIntPipe) id: BookingID,
-    @Body() data: PatchBookingDTO,
+    @Body(new (BookingValidationPipe as any)({ isPatch: true }))
+    data: PatchBookingDTO,
   ): Promise<BookingDTO> {
     try {
       const updates: any = { state: data.state }
 
       if (data.startDate) {
-        const start = new Date(data.startDate)
+        const start = new Date(data.startDate as any)
         if (isNaN(start.getTime())) {
           throw new BadRequestException('startDate is not a valid date')
         }
@@ -229,7 +212,7 @@ export class BookingController {
       }
 
       if (data.endDate) {
-        const end = new Date(data.endDate)
+        const end = new Date(data.endDate as any)
         if (isNaN(end.getTime())) {
           throw new BadRequestException('endDate is not a valid date')
         }

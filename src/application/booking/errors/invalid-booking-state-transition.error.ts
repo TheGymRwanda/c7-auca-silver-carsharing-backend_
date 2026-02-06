@@ -1,7 +1,7 @@
 import { CustomError } from 'ts-custom-error'
 
-import { type BookingID } from './booking'
-import { type BookingState } from './booking-state'
+import { type BookingID } from '../booking'
+import { type BookingState } from '../booking-state'
 
 export class InvalidBookingStateTransitionError extends CustomError {
   public readonly bookingId: BookingID

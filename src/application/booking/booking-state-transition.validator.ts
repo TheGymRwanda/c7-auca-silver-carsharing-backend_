@@ -1,6 +1,6 @@
 import { type BookingID } from './booking'
 import { BookingState } from './booking-state'
-import { InvalidBookingStateTransitionError } from './invalid-booking-state-transition.error'
+import { InvalidBookingStateTransitionError } from './errors/invalid-booking-state-transition.error'
 
 type UserRole = 'OWNER' | 'RENTER'
 
@@ -41,11 +41,13 @@ export class BookingStateTransitionValidator {
     bookingId: BookingID,
   ): void {
     if (currentState === newState) {
-      return // No transition needed
+      return
     }
 
     const transition = this.TRANSITIONS.find(
-      t => t.from === currentState && t.to === newState,
+      stateTransition =>
+        stateTransition.from === currentState &&
+        stateTransition.to === newState,
     )
 
     if (!transition || !transition.allowedRoles.includes(userRole)) {

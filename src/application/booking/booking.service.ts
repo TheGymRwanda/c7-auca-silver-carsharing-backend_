@@ -3,7 +3,7 @@ import { type Except } from 'type-fest'
 
 import { IDatabaseConnection } from '../../persistence/database-connection.interface'
 import { type Transaction } from '../../persistence/database-connection.interface'
-import { type CarID, ICarRepository } from '../car'
+import { type CarID, type Car, ICarRepository } from '../car'
 import { type UserID } from '../user'
 
 import { type IBookingService } from './booking.service.interface'
@@ -59,6 +59,24 @@ export class BookingService implements IBookingService {
     }
   }
 
+  /**
+   * Validates that the specified car is available for the given date range.
+   *
+   * This check is used during both booking creation and updates:
+   * - On create: Ensures the car is not already booked during the requested timeframe
+   * - On update: Allows the renter to modify dates without conflicting with the current booking
+   *   (via excludeBookingId parameter)
+   *
+   * @note Future enhancement: Consider validating that a user (renter) doesn't have
+   *       overlapping bookings with different cars during the same time period.
+   *
+   * @param tx - Database transaction
+   * @param carId - ID of the car to validate
+   * @param startDate - Booking start date
+   * @param endDate - Booking end date
+   * @param excludeBookingId - Optional booking ID to exclude from overlap check (used during updates)
+   * @throws CarNotAvailableError if the car has overlapping bookings
+   */
   private async validateCarAvailability(
     tx: Transaction,
     carId: CarID,
@@ -79,6 +97,30 @@ export class BookingService implements IBookingService {
 
     if (overlappingBookings.length > 0) {
       throw new CarNotAvailableError(carId, startDate, endDate)
+    }
+  }
+
+  /**
+   * Verifies that the given user has access to the specified booking.
+   * A user can access a booking if they are either:
+   * - The renter (person who made the booking), OR
+   * - The car owner (person who owns the car being booked)
+   *
+   * @param booking - The booking to check access for
+   * @param car - The car associated with the booking
+   * @param userId - The ID of the user attempting to access the booking
+   * @throws BookingAccessDeniedError if the user is neither the renter nor the car owner
+   */
+  private assertBookingAccess(
+    booking: Booking,
+    car: Car,
+    userId: UserID,
+  ): void {
+    const isRenter = booking.renterId === userId
+    const isOwner = car.ownerId === userId
+
+    if (!isRenter && !isOwner) {
+      throw new BookingAccessDeniedError(booking.id)
     }
   }
 
@@ -115,15 +157,9 @@ export class BookingService implements IBookingService {
   public async get(id: BookingID, userId: UserID): Promise<Booking> {
     return this.databaseConnection.transactional(async tx => {
       const booking = await this.bookingRepository.get(tx, id)
-
       const car = await this.carRepository.get(tx, booking.carId)
 
-      const isRenter = booking.renterId === userId
-      const isOwner = car.ownerId === userId
-
-      if (!isRenter && !isOwner) {
-        throw new BookingAccessDeniedError(id)
-      }
+      this.assertBookingAccess(booking, car, userId)
 
       return booking
     })
@@ -144,17 +180,14 @@ export class BookingService implements IBookingService {
       const booking = await this.bookingRepository.get(tx, id)
       const car = await this.carRepository.get(tx, booking.carId)
 
-      const isRenter = booking.renterId === userId
-      const isOwner = car.ownerId === userId
+      // Verify user has permission to modify this booking
+      this.assertBookingAccess(booking, car, userId)
 
-      if (!isRenter && !isOwner) {
-        throw new BookingAccessDeniedError(id)
-      }
+      // Determine the user's role in this booking for state transition validation
+      const isOwner = car.ownerId === userId
+      const userRole = isOwner ? UserBookingRole.OWNER : UserBookingRole.RENTER
 
       if (updates.state) {
-        const userRole = isOwner
-          ? UserBookingRole.OWNER
-          : UserBookingRole.RENTER
         BookingStateTransitionValidator.validate(
           booking.state,
           updates.state,
@@ -163,6 +196,8 @@ export class BookingService implements IBookingService {
         )
       }
 
+      // Only validate dates and check car availability if dates are being updated
+      // This prevents unnecessary validation when only state is being changed
       if (updates.startDate || updates.endDate) {
         const startDate = updates.startDate || booking.startDate
         const endDate = updates.endDate || booking.endDate

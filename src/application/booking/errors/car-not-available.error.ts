@@ -1,6 +1,6 @@
 import { CustomError } from 'ts-custom-error'
 
-import { type CarID } from '../car'
+import { type CarID } from '../../car'
 
 export class CarNotAvailableError extends CustomError {
   public readonly carId: CarID
